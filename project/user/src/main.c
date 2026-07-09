@@ -53,7 +53,13 @@ int main (void)
     {
         // 此处编写需要循环执行的代码
         Buzz(1);
-
+        system_delay_ms(500);
+        Buzz(0);
+        system_delay_ms(500);
+        Light(0);
+        system_delay_ms(500);
+        Light(1);
+        system_delay_ms(500);
         // 此处编写需要循环执行的代码
     }
 }
