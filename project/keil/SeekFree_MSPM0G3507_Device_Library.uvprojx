@@ -10,7 +10,7 @@
       <TargetName>SeekFree_MSPM0G3507_Device_Library</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6190000::V6.19::ARMCLANG</pCCUsed>
+      <pCCUsed>6240000::V6.24::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -52,7 +52,7 @@
           <OutputName>SeekFree_MSPM0G3507_Device_Library</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
-          <CreateHexFile>0</CreateHexFile>
+          <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
           <ListingPath>.\Listings\</ListingPath>
@@ -813,6 +813,38 @@
         </Group>
         <Group>
           <GroupName>code</GroupName>
+          <Files>
+            <File>
+              <FileName>headfile.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\code\headfile.h</FilePath>
+            </File>
+            <File>
+              <FileName>Initialize.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\Initialize.c</FilePath>
+            </File>
+            <File>
+              <FileName>Initialize.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\code\Initialize.h</FilePath>
+            </File>
+            <File>
+              <FileName>Light_and_Buzzer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\code\Light_and_Buzzer.c</FilePath>
+            </File>
+            <File>
+              <FileName>Light_and_Buzzer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\code\Light_and_Buzzer.h</FilePath>
+            </File>
+            <File>
+              <FileName>新建文本文档.txt</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\code\新建文本文档.txt</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>ti_config</GroupName>
