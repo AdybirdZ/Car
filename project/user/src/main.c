@@ -72,7 +72,6 @@ void motor_pid_pit_handler (uint32 event, void *ptr)
 
     motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor1_PID, motor_target_speed[LEFT_MOTOR], motor_encoder_speed[LEFT_MOTOR], LEFT_MOTOR);
     motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor2_PID, motor_target_speed[RIGHT_MOTOR], motor_encoder_speed[RIGHT_MOTOR], RIGHT_MOTOR);
-
 }
 
 int main (void)
