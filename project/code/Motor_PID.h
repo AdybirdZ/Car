@@ -1,7 +1,10 @@
 #ifndef _MOTOR_PID_H_
 #define _MOTOR_PID_H_
 
+#include "Encoder.h"
 #include "Motor.h"
+
+#define MOTOR_PID_PERIOD_MS        (5)
 
 typedef struct
 {

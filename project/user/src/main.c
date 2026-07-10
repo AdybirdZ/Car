@@ -40,23 +40,14 @@
 
 // **************************** 代码区域 ****************************
 
-#define MOTOR_PID_PERIOD_MS        (5)
-#define LEFT_MOTOR                 (MOTOR1)
-#define RIGHT_MOTOR                (MOTOR2)
-#define LEFT_ENCODER_INDEX         (1)
-#define RIGHT_ENCODER_INDEX        (0)
-#define WIFI_SSID                  "呆呆鸟的大型鸟窝"
-#define WIFI_PASSWORD              "wangluomima"
-#define TCP_TARGET_IP              WIFI_SPI_TARGET_IP
-#define TCP_TARGET_PORT            WIFI_SPI_TARGET_PORT
-#define WIFI_LOCAL_PORT            "6666"
-
 volatile uint8 pit_flag = 0;
-uint8 oscilloscope_count = 0;
+
 volatile int16 motor_target_speed[2]        = {0, 0};
 volatile int16 motor_encoder_location[2]    = {0, 0};
 volatile int16 motor_encoder_speed[2]       = {0, 0};
 volatile int8 motor_pwm_duty[2]             = {0, 0};
+
+uint8 oscilloscope_count = 0;
 
 void motor_pid_pit_handler (uint32 event, void *ptr)
 {
@@ -78,32 +69,16 @@ int main (void)
 {
     clock_init(SYSTEM_CLOCK_80M);   // 时钟配置及系统初始化<务必保留>
     debug_init();					// 调试串口信息初始化
+
 	// 此处编写用户代码 例如外设初始化代码等
-
-    while(wifi_spi_init(WIFI_SSID, WIFI_PASSWORD))
-    {
-        printf("\r\n connect wifi failed. \r\n");
-        system_delay_ms(100);
-    }
-
-    if(1 != WIFI_SPI_AUTO_CONNECT)
-    {
-        while(wifi_spi_socket_connect("TCP", TCP_TARGET_IP, TCP_TARGET_PORT, WIFI_LOCAL_PORT))
-        {
-            printf("\r\n Connect TCP Servers error, try again.");
-            system_delay_ms(100);
-        }
-    }
-
-    seekfree_assistant_interface_init(SEEKFREE_ASSISTANT_WIFI_SPI);
 
     Light_and_Buzz_Init();
     Motor_Init();
-    absolute_encoder_init(LEFT_ENCODER_INDEX);
-    absolute_encoder_init(RIGHT_ENCODER_INDEX);
+    Encoder_Init();
+    WIFI_Init();
 
-    Motor_PID_Init(&Motor1_PID, 1.0, 0.0, 0.0, PWM_MAX, 50);
-    Motor_PID_Init(&Motor2_PID, 1.0, 0.0, 0.0, PWM_MAX, 50);
+    Motor_PID_Init(&Motor1_PID, 0.2f, 0.0f, 0.0f, PWM_MAX, 50);
+    Motor_PID_Init(&Motor2_PID, 0.2f, 0.0f, 0.0f, PWM_MAX, 50);
 
     pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, motor_pid_pit_handler, (void *)&pit_flag);
 
@@ -124,13 +99,7 @@ int main (void)
             if(4 <= oscilloscope_count)
             {
                 oscilloscope_count = 0;
-
-                seekfree_assistant_oscilloscope_data.data[0] = motor_encoder_speed[LEFT_MOTOR];
-                seekfree_assistant_oscilloscope_data.data[1] = motor_encoder_speed[RIGHT_MOTOR];
-                seekfree_assistant_oscilloscope_data.channel_num = 2;
-                seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
-
-                seekfree_assistant_data_analysis();
+                WIFI_Oscilloscope_Process();
             }
         }
         // 此处编写需要循环执行的代码

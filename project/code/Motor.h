@@ -9,8 +9,8 @@
 #define MOTOR2_DIR               (B9 )
 #define MOTOR2_PWM               (PWM_TIM_A0_CH0_B8 )
 
-#define MOTOR1                   (0)
-#define MOTOR2                   (1)
+#define LEFT_MOTOR               (0)
+#define RIGHT_MOTOR              (1)
 
 #define PWM_MAX                  (25)
 

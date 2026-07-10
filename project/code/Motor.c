@@ -22,12 +22,12 @@ void Set_PWM (int8 duty, int8 motor)
 
     if(duty >= 0)                                                           	    // 正转
     {
-        if(motor == MOTOR1)
+        if(motor == LEFT_MOTOR)
         {
             gpio_set_level(MOTOR1_DIR, GPIO_HIGH);                                 	// DIR输出高电平
             pwm_set_duty(MOTOR1_PWM, duty * (PWM_DUTY_MAX / 100));                  // 计算占空比
         }
-        else if(motor == MOTOR2)
+        else if(motor == RIGHT_MOTOR)
         {
             gpio_set_level(MOTOR2_DIR, GPIO_HIGH);                                 	// DIR输出高电平
             pwm_set_duty(MOTOR2_PWM, duty * (PWM_DUTY_MAX / 100));                  // 计算占空比
@@ -35,12 +35,12 @@ void Set_PWM (int8 duty, int8 motor)
     }
     else
     {
-        if(motor == MOTOR1)
+        if(motor == LEFT_MOTOR)
         {
             gpio_set_level(MOTOR1_DIR, GPIO_LOW);                                   // DIR输出低电平
             pwm_set_duty(MOTOR1_PWM, (-duty) * (PWM_DUTY_MAX / 100));               // 计算占空比
         }
-        else if(motor == MOTOR2)
+        else if(motor == RIGHT_MOTOR)
         {
             gpio_set_level(MOTOR2_DIR, GPIO_LOW);                                   // DIR输出低电平
             pwm_set_duty(MOTOR2_PWM, (-duty) * (PWM_DUTY_MAX / 100));               // 计算占空比
