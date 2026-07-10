@@ -47,19 +47,17 @@ int main (void)
 	// 此处编写用户代码 例如外设初始化代码等
 
     Light_and_Buzz_Init();
+    Motor_Init();
 
     // 此处编写用户代码 例如外设初始化代码等
+
+    Set_PWM(10, MOTOR1);
+    Set_PWM(-10, MOTOR2);
+    
     while(true)
     {
         // 此处编写需要循环执行的代码
-        Buzz(1);
-        system_delay_ms(500);
-        Buzz(0);
-        system_delay_ms(500);
-        Light(0);
-        system_delay_ms(500);
-        Light(1);
-        system_delay_ms(500);
+        
         // 此处编写需要循环执行的代码
     }
 }

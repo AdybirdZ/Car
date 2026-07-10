@@ -3,5 +3,6 @@
 
 #include "zf_common_headfile.h"
 #include "Light_and_Buzzer.h"
+#include "Motor.h"
 
 #endif
