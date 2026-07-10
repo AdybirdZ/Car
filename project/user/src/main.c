@@ -40,6 +40,30 @@
 
 // **************************** 代码区域 ****************************
 
+#define MOTOR_PID_PERIOD_MS        (5)
+
+volatile uint8 pit_flag = 0;
+volatile int16 motor_target_speed[2]        = {0, 0};
+volatile int16 motor_encoder_location[2]    = {0, 0};
+volatile int16 motor_encoder_speed[2]       = {0, 0};
+volatile int8 motor_pwm_duty[2]             = {0, 0};
+
+void motor_pid_pit_handler (uint32 event, void *ptr)
+{
+    (void)event;            // 暂时无需判断中断触发源，直接丢弃
+
+    *((volatile uint8 *)ptr) = 1;
+
+    motor_encoder_location[MOTOR1] = absolute_encoder_get_location(MOTOR1);
+    motor_encoder_location[MOTOR2] = absolute_encoder_get_location(MOTOR2);
+
+    motor_encoder_speed[MOTOR1] = absolute_encoder_get_offset(MOTOR1);
+    motor_encoder_speed[MOTOR2] = absolute_encoder_get_offset(MOTOR2);
+
+    motor_pwm_duty[MOTOR1] = Motor_PID_Control(&Motor1_PID, motor_target_speed[MOTOR1], motor_encoder_speed[MOTOR1], MOTOR1);
+    motor_pwm_duty[MOTOR2] = Motor_PID_Control(&Motor2_PID, motor_target_speed[MOTOR2], motor_encoder_speed[MOTOR2], MOTOR2);
+}
+
 int main (void)
 {
     clock_init(SYSTEM_CLOCK_80M);   // 时钟配置及系统初始化<务必保留>
@@ -48,26 +72,33 @@ int main (void)
 
     Light_and_Buzz_Init();
     Motor_Init();
+    absolute_encoder_init(MOTOR1);
+    absolute_encoder_init(MOTOR2);
+
+    Motor_PID_Init(&Motor1_PID, 0.5, 0.1, 0.2, 100, 50);
+    Motor_PID_Init(&Motor2_PID, 0.5, 0.1, 0.2, 100, 50);
+
+    pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, motor_pid_pit_handler, (void *)&pit_flag);
+
+    interrupt_global_enable(0);                 // 中断使能
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    
-    
+
+
     while(true)
     {
         // 此处编写需要循环执行的代码
-        Set_PWM(20, MOTOR1);
-        Set_PWM(20, MOTOR2);
+        motor_target_speed[MOTOR1] = 20;
+        motor_target_speed[MOTOR2] = 20;
         system_delay_ms(1000);
-        Set_PWM(-20, MOTOR1);
-        Set_PWM(-20, MOTOR2);
+        motor_target_speed[MOTOR1] = -20;
+        motor_target_speed[MOTOR2] = -20;
         system_delay_ms(1000);
-        Set_PWM(0, MOTOR1);
-        Set_PWM(0, MOTOR2);
+        motor_target_speed[MOTOR1] = 0;
+        motor_target_speed[MOTOR2] = 0;
         system_delay_ms(1000);
 
-        Motor_PID_Init(&Motor1_PID, 0.5, 0.1, 0.2, PWM_MAX, 50);
         // 此处编写需要循环执行的代码
     }
 }
-
