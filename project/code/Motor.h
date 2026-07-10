@@ -12,6 +12,8 @@
 #define MOTOR1                   (1)
 #define MOTOR2                   (2)
 
+#define PWM_MAX                  (25)
+
 void Motor_Init ();
 void Set_PWM (int8 duty, int8 motor);
 

@@ -1,0 +1,85 @@
+#include "Motor_PID.h"
+
+Motor_PID_Struct Motor1_PID;
+Motor_PID_Struct Motor2_PID;
+
+static float Motor_PID_Limit (float value, float limit)         // 积分及输出限幅函数
+{
+    if(limit < 0)                                               // 防止输成负数
+    {
+        limit = -limit;
+    }
+
+    if(value > limit)
+    {
+        value = limit;
+    }
+    else if(value < -limit)
+    {
+        value = -limit;
+    }
+
+    return value;
+}
+
+void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max)
+{
+    pid->kp = kp;
+    pid->ki = ki;
+    pid->kd = kd;
+
+    pid->target = 0;
+    pid->actual = 0;
+    pid->err = 0;
+    pid->err_last = 0;
+    pid->integral = 0;
+    pid->output = 0;
+
+    pid->output_max = output_max;
+    pid->integral_max = integral_max;
+}
+
+void Motor_PID_Set (Motor_PID_Struct *pid, float kp, float ki, float kd)
+{
+    pid->kp = kp;
+    pid->ki = ki;
+    pid->kd = kd;
+}
+
+void Motor_PID_Clear (Motor_PID_Struct *pid)
+{
+    pid->target = 0;
+    pid->actual = 0;
+    pid->err = 0;
+    pid->err_last = 0;
+    pid->integral = 0;
+    pid->output = 0;
+}
+
+float Motor_PID_Calc (Motor_PID_Struct *pid, float target, float actual)
+{
+    pid->target = target;
+    pid->actual = actual;
+    pid->err = pid->target - pid->actual;
+
+    pid->integral += pid->err;
+    pid->integral = Motor_PID_Limit(pid->integral, pid->integral_max);
+
+    pid->output = pid->kp * pid->err
+                + pid->ki * pid->integral
+                + pid->kd * (pid->err - pid->err_last);
+    pid->output = Motor_PID_Limit(pid->output, pid->output_max);
+
+    pid->err_last = pid->err;
+
+    return pid->output;
+}
+
+int8 Motor_PID_Control (Motor_PID_Struct *pid, float target, float actual, int8 motor)
+{
+    int8 duty = (int8)Motor_PID_Calc(pid, target, actual);
+
+    Set_PWM(duty, motor);
+
+    return duty;
+}

@@ -11,23 +11,23 @@ void Motor_Init ()
 
 void Set_PWM (int8 duty, int8 motor)
 {
-    if(duty > 25)                                                                   // 防止给的占空比绝对值过大
+    if(duty > PWM_MAX)                                                              // 防止给的占空比绝对值过大
     {
-        duty = 25;
+        duty = PWM_MAX;
     }
-    if(duty < -25)
+    if(duty < -PWM_MAX)
     {
-        duty = -25;
+        duty = -PWM_MAX;
     }
 
     if(duty >= 0)                                                           	    // 正转
     {
-        if(motor == 1)
+        if(motor == MOTOR1)
         {
             gpio_set_level(MOTOR1_DIR, GPIO_HIGH);                                 	// DIR输出高电平
             pwm_set_duty(MOTOR1_PWM, duty * (PWM_DUTY_MAX / 100));                  // 计算占空比
         }
-        else if(motor == 2)
+        else if(motor == MOTOR2)
         {
             gpio_set_level(MOTOR2_DIR, GPIO_HIGH);                                 	// DIR输出高电平
             pwm_set_duty(MOTOR2_PWM, duty * (PWM_DUTY_MAX / 100));                  // 计算占空比
