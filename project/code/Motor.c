@@ -11,6 +11,15 @@ void Motor_Init ()
 
 void Set_PWM (int8 duty, int8 motor)
 {
+    if(duty > 25)                                                                   // 防止给的占空比绝对值过大
+    {
+        duty = 25;
+    }
+    if(duty < -25)
+    {
+        duty = -25;
+    }
+
     if(duty >= 0)                                                           	    // 正转
     {
         if(motor == 1)
