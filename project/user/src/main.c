@@ -65,6 +65,8 @@ int main (void)
         Set_PWM(0, MOTOR1);
         Set_PWM(0, MOTOR2);
         system_delay_ms(1000);
+
+        Motor_PID_Init(&Motor1_PID, 0.5, 0.1, 0.2, PWM_MAX, 50);
         // 此处编写需要循环执行的代码
     }
 }
