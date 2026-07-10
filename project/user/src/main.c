@@ -51,13 +51,20 @@ int main (void)
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    Set_PWM(10, MOTOR1);
-    Set_PWM(-10, MOTOR2);
+    
     
     while(true)
     {
         // 此处编写需要循环执行的代码
-        
+        Set_PWM(20, MOTOR1);
+        Set_PWM(20, MOTOR2);
+        system_delay_ms(1000);
+        Set_PWM(-20, MOTOR1);
+        Set_PWM(-20, MOTOR2);
+        system_delay_ms(1000);
+        Set_PWM(0, MOTOR1);
+        Set_PWM(0, MOTOR2);
+        system_delay_ms(1000);
         // 此处编写需要循环执行的代码
     }
 }
