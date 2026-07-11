@@ -3,9 +3,9 @@
 Motor_PID_Struct Motor1_PID;
 Motor_PID_Struct Motor2_PID;
 
-volatile int16 motor_target_speed[2]        = {0, 0};
+volatile float motor_target_speed[2]        = {0, 0};
 volatile int16 motor_encoder_location[2]    = {0, 0};
-volatile int16 motor_encoder_speed[2]       = {0, 0};
+volatile float motor_encoder_speed[2]       = {0, 0};
 volatile int8 motor_pwm_duty[2]             = {0, 0};
 
 static float Motor_PID_Limit (float value, float limit)         // 积分及输出限幅函数

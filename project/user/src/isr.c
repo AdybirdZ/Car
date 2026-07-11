@@ -34,6 +34,9 @@
 
 void motor_pid_pit_handler (uint32 event, void *ptr)
 {
+    int16 left_encoder_offset = 0;
+    int16 right_encoder_offset = 0;
+
     (void)event;            // 暂时无需判断中断触发源，直接丢弃
 
     *((volatile uint8 *)ptr) = 1;
@@ -41,11 +44,14 @@ void motor_pid_pit_handler (uint32 event, void *ptr)
     motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
     motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
 
-    motor_encoder_speed[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
-    motor_encoder_speed[RIGHT_MOTOR] = absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);
+    left_encoder_offset = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
+    right_encoder_offset = absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);
 
-    motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor1_PID, motor_target_speed[LEFT_MOTOR], motor_encoder_speed[LEFT_MOTOR], LEFT_MOTOR);
-    motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor2_PID, motor_target_speed[RIGHT_MOTOR], motor_encoder_speed[RIGHT_MOTOR], RIGHT_MOTOR);
+    motor_encoder_speed[LEFT_MOTOR] = Encoder_Offset_To_Speed(left_encoder_offset);
+    motor_encoder_speed[RIGHT_MOTOR] = Encoder_Offset_To_Speed(-right_encoder_offset);
+
+    motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor2_PID, motor_target_speed[LEFT_MOTOR], motor_encoder_speed[LEFT_MOTOR], LEFT_MOTOR);
+    motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor1_PID, motor_target_speed[RIGHT_MOTOR], motor_encoder_speed[RIGHT_MOTOR], RIGHT_MOTOR);
 }
 
 void TIMA0_IRQHandler (void)

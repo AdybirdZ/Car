@@ -1,7 +1,7 @@
 #include "Motor.h"
 #include "WIFI.h"
 
-extern volatile int16 motor_encoder_speed[2];
+extern volatile float motor_encoder_speed[2];
 
 void WIFI_Init ()
 {
