@@ -71,8 +71,8 @@ int main (void)
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    Set_PWM(9.6, LEFT_MOTOR);
-    Set_PWM(15.8, RIGHT_MOTOR);
+    Set_PWM(9.5, LEFT_MOTOR);
+    Set_PWM(15.7, RIGHT_MOTOR);
 
     while(true)
     {

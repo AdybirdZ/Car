@@ -3,6 +3,24 @@
 
 extern volatile float motor_encoder_speed[2];
 
+#define WIFI_LEFT_DUTY_PARAMETER_INDEX      (2)
+#define WIFI_RIGHT_DUTY_PARAMETER_INDEX     (3)
+
+static void WIFI_Parameter_Process ()
+{
+    if(seekfree_assistant_parameter_update_flag[WIFI_LEFT_DUTY_PARAMETER_INDEX])
+    {
+        seekfree_assistant_parameter_update_flag[WIFI_LEFT_DUTY_PARAMETER_INDEX] = 0;
+        Set_PWM(seekfree_assistant_parameter[WIFI_LEFT_DUTY_PARAMETER_INDEX], LEFT_MOTOR);
+    }
+
+    if(seekfree_assistant_parameter_update_flag[WIFI_RIGHT_DUTY_PARAMETER_INDEX])
+    {
+        seekfree_assistant_parameter_update_flag[WIFI_RIGHT_DUTY_PARAMETER_INDEX] = 0;
+        Set_PWM(seekfree_assistant_parameter[WIFI_RIGHT_DUTY_PARAMETER_INDEX], RIGHT_MOTOR);
+    }
+}
+
 void WIFI_Init ()
 {
     while(wifi_spi_init(WIFI_SSID, WIFI_PASSWORD))
@@ -30,4 +48,5 @@ void WIFI_Oscilloscope_Process ()
     seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
 
     seekfree_assistant_data_analysis();
+    WIFI_Parameter_Process();
 }
