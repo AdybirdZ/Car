@@ -1,7 +1,7 @@
 #include "Motor_PID.h"
 
-Motor_PID_Struct Motor1_PID;
-Motor_PID_Struct Motor2_PID;
+Motor_PID_Struct Motor_Left_PID;
+Motor_PID_Struct Motor_Right_PID;
 
 volatile float motor_target_speed[2]        = {0, 0};
 volatile int16 motor_encoder_location[2]    = {0, 0};

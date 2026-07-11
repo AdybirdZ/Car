@@ -23,8 +23,8 @@ typedef struct
     float output_max;
 } Motor_PID_Struct;
 
-extern Motor_PID_Struct Motor1_PID;
-extern Motor_PID_Struct Motor2_PID;
+extern Motor_PID_Struct Motor_Left_PID;
+extern Motor_PID_Struct Motor_Right_PID;
 extern volatile float motor_target_speed[2];
 extern volatile int16 motor_encoder_location[2];
 extern volatile float motor_encoder_speed[2];

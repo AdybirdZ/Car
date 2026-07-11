@@ -1,4 +1,4 @@
-/*********************************************************************************************************************
+﻿/*********************************************************************************************************************
 * MSPM0G3507 Opensource Library 即（MSPM0G3507 开源库）是一个基于官方 SDK 接口的第三方开源库
 * Copyright (c) 2022 SEEKFREE 逐飞科技
 * 
@@ -48,10 +48,10 @@ void motor_pid_pit_handler (uint32 event, void *ptr)
     right_encoder_offset = absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);
 
     motor_encoder_speed[LEFT_MOTOR] = Encoder_Offset_To_Speed(left_encoder_offset);
-    motor_encoder_speed[RIGHT_MOTOR] = Encoder_Offset_To_Speed(-right_encoder_offset);
+    motor_encoder_speed[RIGHT_MOTOR] = Encoder_Offset_To_Speed(-right_encoder_offset);          // 右轮编码器正转反而是减小
 
-    motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor2_PID, motor_target_speed[LEFT_MOTOR], motor_encoder_speed[LEFT_MOTOR], LEFT_MOTOR);
-    motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor1_PID, motor_target_speed[RIGHT_MOTOR], motor_encoder_speed[RIGHT_MOTOR], RIGHT_MOTOR);
+    motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor_Left_PID, motor_target_speed[LEFT_MOTOR], motor_encoder_speed[LEFT_MOTOR], LEFT_MOTOR);
+    motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor_Right_PID, motor_target_speed[RIGHT_MOTOR], motor_encoder_speed[RIGHT_MOTOR], RIGHT_MOTOR);
 }
 
 void TIMA0_IRQHandler (void)
