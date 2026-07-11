@@ -42,28 +42,7 @@
 
 volatile uint8 pit_flag = 0;
 
-volatile int16 motor_target_speed[2]        = {0, 0};
-volatile int16 motor_encoder_location[2]    = {0, 0};
-volatile int16 motor_encoder_speed[2]       = {0, 0};
-volatile int8 motor_pwm_duty[2]             = {0, 0};
-
 uint8 oscilloscope_count = 0;
-
-void motor_pid_pit_handler (uint32 event, void *ptr)
-{
-    (void)event;            // 暂时无需判断中断触发源，直接丢弃
-
-    *((volatile uint8 *)ptr) = 1;
-
-    motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
-    motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
-
-    motor_encoder_speed[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
-    motor_encoder_speed[RIGHT_MOTOR] = absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);
-
-    motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor1_PID, motor_target_speed[LEFT_MOTOR], motor_encoder_speed[LEFT_MOTOR], LEFT_MOTOR);
-    motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor2_PID, motor_target_speed[RIGHT_MOTOR], motor_encoder_speed[RIGHT_MOTOR], RIGHT_MOTOR);
-}
 
 int main (void)
 {
@@ -75,12 +54,12 @@ int main (void)
     Light_and_Buzz_Init();
     Motor_Init();
     Encoder_Init();
-    WIFI_Init();
+    // WIFI_Init();
 
-    Motor_PID_Init(&Motor1_PID, 0.2f, 0.0f, 0.0f, PWM_MAX, 50);
-    Motor_PID_Init(&Motor2_PID, 0.2f, 0.0f, 0.0f, PWM_MAX, 50);
+    // Motor_PID_Init(&Motor1_PID, 0.2f, 0.0f, 0.0f, PWM_MAX, 50);
+    // Motor_PID_Init(&Motor2_PID, 0.2f, 0.0f, 0.0f, PWM_MAX, 50);
 
-    pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, motor_pid_pit_handler, (void *)&pit_flag);
+    // pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, motor_pid_pit_handler, (void *)&pit_flag);
 
     interrupt_global_enable(0);                 // 中断使能
 
@@ -89,9 +68,11 @@ int main (void)
     motor_target_speed[LEFT_MOTOR] = 15;
     motor_target_speed[RIGHT_MOTOR] = 15;
 
+    Set_PWM(20, LEFT_MOTOR);
+
     while(true)
     {
-        if(pit_flag)
+        /* if(pit_flag)
         {
             pit_flag = 0;
             oscilloscope_count ++;
@@ -101,16 +82,11 @@ int main (void)
                 oscilloscope_count = 0;
                 WIFI_Oscilloscope_Process();
             }
-        }
+        }*/
         // 此处编写需要循环执行的代码
 
-        // system_delay_ms(1000);
-        // motor_target_speed[LEFT_MOTOR] = -20;
-        // motor_target_speed[RIGHT_MOTOR] = -20;
-        // system_delay_ms(1000);
-        // motor_target_speed[LEFT_MOTOR] = 0;
-        // motor_target_speed[RIGHT_MOTOR] = 0;
-        // system_delay_ms(1000);
+        motor_encoder_speed[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
+        system_delay_ms(200);
 
         // 此处编写需要循环执行的代码
     }

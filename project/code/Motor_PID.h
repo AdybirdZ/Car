@@ -25,6 +25,10 @@ typedef struct
 
 extern Motor_PID_Struct Motor1_PID;
 extern Motor_PID_Struct Motor2_PID;
+extern volatile int16 motor_target_speed[2];
+extern volatile int16 motor_encoder_location[2];
+extern volatile int16 motor_encoder_speed[2];
+extern volatile int8 motor_pwm_duty[2];
 
 void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max);
 void Motor_PID_Set (Motor_PID_Struct *pid, float kp, float ki, float kd);

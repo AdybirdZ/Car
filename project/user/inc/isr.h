@@ -34,4 +34,6 @@
 
 #include "zf_common_headfile.h"
 
+void motor_pid_pit_handler (uint32 event, void *ptr);
+
 #endif
