@@ -68,8 +68,11 @@ int main (void)
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    Set_PWM(25, LEFT_MOTOR);
-    Set_PWM(25, RIGHT_MOTOR);
+    absolute_encoder_get_location(LEFT_ENCODER_INDEX);
+    absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
+
+    Set_PWM(12, LEFT_MOTOR);
+    Set_PWM(12, RIGHT_MOTOR);
 
     while(true)
     {
@@ -85,6 +88,8 @@ int main (void)
         //     }
         // }
 
+        motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
+        motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
         motor_encoder_speed[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
         motor_encoder_speed[RIGHT_MOTOR] = absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);
         WIFI_Oscilloscope_Process();
