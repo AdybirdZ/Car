@@ -6,7 +6,6 @@ Motor_PID_Struct Motor_Right_PID;
 volatile float motor_target_speed[2]        = {0, 0};
 volatile int16 motor_encoder_location[2]    = {0, 0};
 volatile float motor_encoder_speed[2]       = {0, 0};
-volatile int8 motor_pwm_duty[2]             = {0, 0};
 
 static float Motor_PID_Limit (float value, float limit)         // 积分及输出限幅函数
 {
@@ -80,9 +79,9 @@ float Motor_PID_Calc (Motor_PID_Struct *pid, float target, float actual)
     return pid->output;
 }
 
-int8 Motor_PID_Control (Motor_PID_Struct *pid, float target, float actual, int8 motor)
+float Motor_PID_Control (Motor_PID_Struct *pid, float target, float actual, int8 motor)
 {
-    int8 duty = (int8)Motor_PID_Calc(pid, target, actual);
+    float duty = Motor_PID_Calc(pid, target, actual);
 
     Set_PWM(duty, motor);
 

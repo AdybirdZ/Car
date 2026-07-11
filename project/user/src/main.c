@@ -62,17 +62,17 @@ int main (void)
     // motor_target_speed[LEFT_MOTOR] = 15.0f;
     // motor_target_speed[RIGHT_MOTOR] = 15.0f;
 
+    absolute_encoder_get_location(LEFT_ENCODER_INDEX);
+    absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
+
     // pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, motor_pid_pit_handler, (void *)&pit_flag);
 
     // interrupt_global_enable(0);                 // 中断使能
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    absolute_encoder_get_location(LEFT_ENCODER_INDEX);
-    absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
-
-    Set_PWM(12, LEFT_MOTOR);
-    Set_PWM(12, RIGHT_MOTOR);
+    Set_PWM(9.6, LEFT_MOTOR);
+    Set_PWM(15.8, RIGHT_MOTOR);
 
     while(true)
     {

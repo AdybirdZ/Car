@@ -1,5 +1,7 @@
 #include "Motor.h"
 
+volatile float motor_pwm_duty[2] = {0, 0};
+
 void Motor_Init ()
 {
     gpio_init(MOTOR1_DIR, GPO, GPIO_HIGH, GPO_PUSH_PULL);                          	// GPIO 初始化为输出 默认上拉输出高
@@ -9,7 +11,7 @@ void Motor_Init ()
     pwm_init(MOTOR2_PWM, 17000, 0);                                                	// PWM 通道初始化频率 17KHz 占空比初始为 0
 }
 
-void Set_PWM (int8 duty, int8 motor)
+void Set_PWM (float duty, int8 motor)
 {
     if(duty > PWM_MAX)                                                              // 防止给的占空比绝对值过大
     {
@@ -18,6 +20,11 @@ void Set_PWM (int8 duty, int8 motor)
     if(duty < -PWM_MAX)
     {
         duty = -PWM_MAX;
+    }
+
+    if(motor == LEFT_MOTOR || motor == RIGHT_MOTOR)
+    {
+        motor_pwm_duty[motor] = duty;
     }
 
     if(duty >= 0)                                                           	    // 正转

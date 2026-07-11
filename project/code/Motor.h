@@ -14,7 +14,9 @@
 
 #define PWM_MAX                  (25)
 
+extern volatile float motor_pwm_duty[2];
+
 void Motor_Init ();
-void Set_PWM (int8 duty, int8 motor);
+void Set_PWM (float duty, int8 motor);
 
 #endif

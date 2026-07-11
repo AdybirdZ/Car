@@ -24,7 +24,9 @@ void WIFI_Oscilloscope_Process ()
 {
     seekfree_assistant_oscilloscope_data.data[0] = motor_encoder_speed[LEFT_MOTOR];
     seekfree_assistant_oscilloscope_data.data[1] = motor_encoder_speed[RIGHT_MOTOR];
-    seekfree_assistant_oscilloscope_data.channel_num = 2;
+    seekfree_assistant_oscilloscope_data.data[2] = motor_pwm_duty[LEFT_MOTOR];
+    seekfree_assistant_oscilloscope_data.data[3] = motor_pwm_duty[RIGHT_MOTOR];
+    seekfree_assistant_oscilloscope_data.channel_num = 4;
     seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
 
     seekfree_assistant_data_analysis();
