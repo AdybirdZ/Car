@@ -41,27 +41,7 @@
 // **************************** 代码区域 ****************************
 int main (void)
 {
-    clock_init(SYSTEM_CLOCK_80M);   // 时钟配置及系统初始化<务必保留>
-    debug_init();					// 调试串口信息初始化
-
-	// 此处编写用户代码 例如外设初始化代码等
-
-    Light_and_Buzz_Init();
-    Motor_Init();
-    Encoder_Init();
-    WIFI_Init();
-
-    Motor_PID_Structure_Init(&Motor_Left_PID, 0.02f, 0.016f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
-    Motor_PID_Structure_Init(&Motor_Right_PID, 0.03f, 0.024f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
-
-    Motor_PID_Target_Init(MOTOR_PID_TARGET_OFFSET);
-
-    absolute_encoder_get_location(LEFT_ENCODER_INDEX);
-    absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
-
-    pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, motor_pid_pit_handler, (void *)&pit_flag);
-
-    interrupt_global_enable(0);                 // 中断使能
+    Init();
 
     // 此处编写用户代码 例如外设初始化代码等
 
@@ -82,6 +62,8 @@ int main (void)
         }
 
         system_delay_ms(20);
+
         // 此处编写需要循环执行的代码
+
     }
 }
