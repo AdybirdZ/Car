@@ -1,23 +1,36 @@
 #include "Motor.h"
+#include "Motor_PID.h"
 #include "WIFI.h"
 
-extern volatile float motor_encoder_speed[2];
-
-#define WIFI_LEFT_DUTY_PARAMETER_INDEX      (2)
-#define WIFI_RIGHT_DUTY_PARAMETER_INDEX     (3)
+#define LEFT_KP_INDEX      (4)
+#define RIGHT_KP_INDEX     (5)
+#define LEFT_KI_INDEX      (6)
+#define RIGHT_KI_INDEX     (7)
 
 static void WIFI_Parameter_Process ()
 {
-    if(seekfree_assistant_parameter_update_flag[WIFI_LEFT_DUTY_PARAMETER_INDEX])
+    if(seekfree_assistant_parameter_update_flag[LEFT_KP_INDEX])
     {
-        seekfree_assistant_parameter_update_flag[WIFI_LEFT_DUTY_PARAMETER_INDEX] = 0;
-        Set_PWM(seekfree_assistant_parameter[WIFI_LEFT_DUTY_PARAMETER_INDEX], LEFT_MOTOR);
+        seekfree_assistant_parameter_update_flag[LEFT_KP_INDEX] = 0;
+        Motor_PID_Set(&Motor_Left_PID, seekfree_assistant_parameter[LEFT_KP_INDEX], Motor_Left_PID.ki, Motor_Left_PID.kd);
     }
 
-    if(seekfree_assistant_parameter_update_flag[WIFI_RIGHT_DUTY_PARAMETER_INDEX])
+    if(seekfree_assistant_parameter_update_flag[RIGHT_KP_INDEX])
     {
-        seekfree_assistant_parameter_update_flag[WIFI_RIGHT_DUTY_PARAMETER_INDEX] = 0;
-        Set_PWM(seekfree_assistant_parameter[WIFI_RIGHT_DUTY_PARAMETER_INDEX], RIGHT_MOTOR);
+        seekfree_assistant_parameter_update_flag[RIGHT_KP_INDEX] = 0;
+        Motor_PID_Set(&Motor_Right_PID, seekfree_assistant_parameter[RIGHT_KP_INDEX], Motor_Right_PID.ki, Motor_Right_PID.kd);
+    }
+
+    if(seekfree_assistant_parameter_update_flag[LEFT_KI_INDEX])
+    {
+        seekfree_assistant_parameter_update_flag[LEFT_KI_INDEX] = 0;
+        Motor_PID_Set(&Motor_Left_PID, Motor_Left_PID.kp, seekfree_assistant_parameter[LEFT_KI_INDEX], Motor_Left_PID.kd);
+    }
+
+    if(seekfree_assistant_parameter_update_flag[RIGHT_KI_INDEX])
+    {
+        seekfree_assistant_parameter_update_flag[RIGHT_KI_INDEX] = 0;
+        Motor_PID_Set(&Motor_Right_PID, Motor_Right_PID.kp, seekfree_assistant_parameter[RIGHT_KI_INDEX], Motor_Right_PID.kd);
     }
 }
 
@@ -40,8 +53,8 @@ void WIFI_Init ()
 
 void WIFI_Oscilloscope_Process ()
 {
-    seekfree_assistant_oscilloscope_data.data[0] = motor_encoder_speed[LEFT_MOTOR];
-    seekfree_assistant_oscilloscope_data.data[1] = motor_encoder_speed[RIGHT_MOTOR];
+    seekfree_assistant_oscilloscope_data.data[0] = motor_encoder_offset[LEFT_MOTOR];
+    seekfree_assistant_oscilloscope_data.data[1] = motor_encoder_offset[RIGHT_MOTOR];
     seekfree_assistant_oscilloscope_data.data[2] = motor_pwm_duty[LEFT_MOTOR];
     seekfree_assistant_oscilloscope_data.data[3] = motor_pwm_duty[RIGHT_MOTOR];
     seekfree_assistant_oscilloscope_data.channel_num = 4;

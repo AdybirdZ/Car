@@ -4,7 +4,13 @@
 #include "Encoder.h"
 #include "Motor.h"
 
-#define MOTOR_PID_PERIOD_MS        (5)
+#define MOTOR_PID_PERIOD_MS        (20)
+#define MOTOR_PID_TARGET_OFFSET    (500.0f)
+#define MOTOR_PID_OUTPUT_MAX       (3.0f)
+#define MOTOR_PID_INTEGRAL_MAX     (700.0f)
+
+#define MOTOR_LEFT_OFFSET_PER_DUTY     (51.0f)
+#define MOTOR_RIGHT_OFFSET_PER_DUTY    (31.8f)
 
 typedef struct
 {
@@ -25,9 +31,11 @@ typedef struct
 
 extern Motor_PID_Struct Motor_Left_PID;
 extern Motor_PID_Struct Motor_Right_PID;
-extern volatile float motor_target_speed[2];
+//extern volatile float motor_target_speed[2];
+extern volatile float motor_target_offset[2];
 extern volatile int16 motor_encoder_location[2];
-extern volatile float motor_encoder_speed[2];
+//extern volatile float motor_encoder_speed[2];
+extern volatile int16 motor_encoder_offset[2];
 
 void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max);
 void Motor_PID_Set (Motor_PID_Struct *pid, float kp, float ki, float kd);
