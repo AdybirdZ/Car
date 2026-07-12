@@ -39,11 +39,6 @@
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 
 // **************************** 代码区域 ****************************
-
-volatile uint8 pit_flag = 0;
-
-uint8 oscilloscope_count = 0;
-
 int main (void)
 {
     clock_init(SYSTEM_CLOCK_80M);   // 时钟配置及系统初始化<务必保留>
@@ -56,11 +51,10 @@ int main (void)
     Encoder_Init();
     WIFI_Init();
 
-    Motor_PID_Init(&Motor_Left_PID, 0.02f, 0.016f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
-    Motor_PID_Init(&Motor_Right_PID, 0.03f, 0.024f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+    Motor_PID_Structure_Init(&Motor_Left_PID, 0.02f, 0.016f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+    Motor_PID_Structure_Init(&Motor_Right_PID, 0.03f, 0.024f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
 
-    motor_target_offset[LEFT_MOTOR] = MOTOR_PID_TARGET_OFFSET;
-    motor_target_offset[RIGHT_MOTOR] = MOTOR_PID_TARGET_OFFSET;
+    Motor_PID_Target_Init(MOTOR_PID_TARGET_OFFSET);
 
     absolute_encoder_get_location(LEFT_ENCODER_INDEX);
     absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
@@ -80,7 +74,7 @@ int main (void)
             pit_flag = 0;
             oscilloscope_count ++;
 
-            if(1 <= oscilloscope_count)
+            if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
             {
                 oscilloscope_count = 0;
                 WIFI_Oscilloscope_Process();
@@ -88,7 +82,6 @@ int main (void)
         }
 
         system_delay_ms(20);
-
         // 此处编写需要循环执行的代码
     }
 }

@@ -8,6 +8,9 @@
 #define TCP_TARGET_IP              WIFI_SPI_TARGET_IP
 #define TCP_TARGET_PORT            WIFI_SPI_TARGET_PORT
 #define WIFI_LOCAL_PORT            "6666"
+#define OSCILLOSCOPE_FREQ          (1)                      // 多少PIT周期发送一次示波器数据到电脑
+
+extern uint8 oscilloscope_count;
 
 void WIFI_Init ();
 void WIFI_Oscilloscope_Process ();

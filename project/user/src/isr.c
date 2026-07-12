@@ -32,6 +32,8 @@
 #include "Motor_PID.h"
 #include "isr.h"
 
+volatile uint8 pit_flag = 0;
+
 void motor_pid_pit_handler (uint32 event, void *ptr)
 {
     (void)event;            // 暂时无需判断中断触发源，直接丢弃

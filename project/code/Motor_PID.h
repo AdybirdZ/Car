@@ -35,7 +35,8 @@ extern volatile float motor_target_offset[2];
 extern volatile int16 motor_encoder_location[2];
 extern volatile int16 motor_encoder_offset[2];
 
-void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max);
+void Motor_PID_Structure_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max);
+void Motor_PID_Target_Init (float target);
 void Motor_PID_Set (Motor_PID_Struct *pid, float kp, float ki, float kd);
 void Motor_PID_Clear (Motor_PID_Struct *pid);
 float Motor_PID_Calc (Motor_PID_Struct *pid, float target, float actual);

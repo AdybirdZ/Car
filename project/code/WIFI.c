@@ -9,6 +9,8 @@
 #define LEFT_KD_INDEX      (6)
 #define RIGHT_KD_INDEX     (7)
 
+uint8 oscilloscope_count = 0;
+
 static void WIFI_Parameter_Process ()
 {
     if(seekfree_assistant_parameter_update_flag[LEFT_KP_INDEX])

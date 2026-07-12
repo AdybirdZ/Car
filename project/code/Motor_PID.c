@@ -26,7 +26,7 @@ static float Motor_PID_Limit (float value, float limit)         // 积分及输�
     return value;
 }
 
-void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max)
+void Motor_PID_Structure_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max)
 {
     pid->kp = kp;
     pid->ki = ki;
@@ -41,6 +41,12 @@ void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float 
 
     pid->output_max = output_max;
     pid->integral_max = integral_max;
+}
+
+void Motor_PID_Target_Init (float target)
+{
+    motor_target_offset[LEFT_MOTOR] = target;
+    motor_target_offset[RIGHT_MOTOR] = target;
 }
 
 void Motor_PID_Set (Motor_PID_Struct *pid, float kp, float ki, float kd)

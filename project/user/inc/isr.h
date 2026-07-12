@@ -36,4 +36,6 @@
 
 void motor_pid_pit_handler (uint32 event, void *ptr);
 
+extern volatile uint8 pit_flag;
+
 #endif
