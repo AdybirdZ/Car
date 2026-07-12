@@ -30,6 +30,7 @@
 ********************************************************************************************************************/
 
 #include "Motor_PID.h"
+#include "Position.h"
 #include "isr.h"
 
 volatile uint8 pit_flag = 0;
@@ -40,14 +41,22 @@ void motor_pid_pit_handler (uint32 event, void *ptr)
 
     *((volatile uint8 *)ptr) = 1;
 
-    motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
-    motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
+    if(enable_motor_output)
+    {
+        motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
+        motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
 
-    motor_encoder_offset[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
-    motor_encoder_offset[RIGHT_MOTOR] = - absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);          // 右轮编码器正转反而是减小
+        motor_encoder_offset[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
+        motor_encoder_offset[RIGHT_MOTOR] = - absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);          // 右轮编码器正转反而是减小
 
-    motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor_Left_PID, motor_target_offset[LEFT_MOTOR], motor_encoder_offset[LEFT_MOTOR], LEFT_MOTOR);
-    motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor_Right_PID, motor_target_offset[RIGHT_MOTOR], motor_encoder_offset[RIGHT_MOTOR], RIGHT_MOTOR);
+        motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor_Left_PID, motor_target_offset[LEFT_MOTOR], motor_encoder_offset[LEFT_MOTOR], LEFT_MOTOR);
+        motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor_Right_PID, motor_target_offset[RIGHT_MOTOR], motor_encoder_offset[RIGHT_MOTOR], RIGHT_MOTOR);
+    }
+
+    if(enable_position)
+    {
+        Position_Update();
+    }
 }
 
 void TIMA0_IRQHandler (void)

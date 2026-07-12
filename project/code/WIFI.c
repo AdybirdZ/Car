@@ -1,5 +1,6 @@
 #include "Motor.h"
 #include "Motor_PID.h"
+#include "Position.h"
 #include "WIFI.h"
 
 #define LEFT_KP_INDEX      (2)
@@ -10,6 +11,8 @@
 #define RIGHT_KD_INDEX     (7)
 
 uint8 oscilloscope_count = 0;
+bool enable_WIFI = true;
+bool enable_parameter_process = true;      // 是否启用PID调参模式
 
 static void WIFI_Parameter_Process ()
 {
@@ -69,11 +72,36 @@ void WIFI_Init ()
 
 void WIFI_Oscilloscope_Process ()
 {
-    seekfree_assistant_oscilloscope_data.data[0] = motor_encoder_offset[LEFT_MOTOR];
-    seekfree_assistant_oscilloscope_data.data[1] = motor_encoder_offset[RIGHT_MOTOR];
-    seekfree_assistant_oscilloscope_data.channel_num = 2;
-    seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
+    uint8 channel_num = 0;
+
+    if(!enable_WIFI)
+    {
+        return;
+    }
+
+    if(enable_motor_output)
+    {
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[LEFT_MOTOR];
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[RIGHT_MOTOR];
+    }
+
+    if(enable_position)
+    {
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[ROLL];
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[PITCH];
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[YAW];
+    }
+
+    if(channel_num)
+    {
+        seekfree_assistant_oscilloscope_data.channel_num = channel_num;
+        seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
+    }
 
     seekfree_assistant_data_analysis();
-    WIFI_Parameter_Process();
+
+    if(enable_motor_output && enable_parameter_process)
+    {
+        WIFI_Parameter_Process();
+    }
 }

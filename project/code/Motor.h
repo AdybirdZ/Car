@@ -14,6 +14,7 @@
 
 #define PWM_MAX                  (25)
 
+extern bool enable_motor_output;
 extern volatile float motor_pwm_duty[2];
 
 void Motor_Init ();

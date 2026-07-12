@@ -1,5 +1,6 @@
 #include "Motor.h"
 
+bool enable_motor_output = true;
 volatile float motor_pwm_duty[2] = {0, 0};
 
 void Motor_Init ()
@@ -13,6 +14,15 @@ void Motor_Init ()
 
 void Set_PWM (float duty, int8 motor)
 {
+    if(!enable_motor_output)
+    {
+        if(motor == LEFT_MOTOR || motor == RIGHT_MOTOR)
+        {
+            motor_pwm_duty[motor] = 0;
+        }
+        return;
+    }
+
     if(duty > PWM_MAX)                                                              // 防止给的占空比绝对值过大
     {
         duty = PWM_MAX;

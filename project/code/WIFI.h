@@ -11,6 +11,8 @@
 #define OSCILLOSCOPE_FREQ          (1)                      // 多少PIT周期发送一次示波器数据到电脑
 
 extern uint8 oscilloscope_count;
+extern bool enable_WIFI;
+extern bool enable_parameter_process;
 
 void WIFI_Init ();
 void WIFI_Oscilloscope_Process ();

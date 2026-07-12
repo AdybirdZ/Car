@@ -6,11 +6,7 @@
 
 #define MOTOR_PID_PERIOD_MS        (20)
 #define MOTOR_PID_TARGET_OFFSET    (500.0f)
-#define MOTOR_PID_OUTPUT_MAX       (3.0f)
-#define MOTOR_PID_INTEGRAL_MAX     (700.0f)
-
-#define MOTOR_LEFT_OFFSET_PER_DUTY     (51.0f)
-#define MOTOR_RIGHT_OFFSET_PER_DUTY    (31.8f)
+#define MOTOR_PID_INTEGRAL_MAX     (1000.0f)
 
 typedef struct
 {
