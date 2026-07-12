@@ -31,10 +31,8 @@ typedef struct
 
 extern Motor_PID_Struct Motor_Left_PID;
 extern Motor_PID_Struct Motor_Right_PID;
-//extern volatile float motor_target_speed[2];
 extern volatile float motor_target_offset[2];
 extern volatile int16 motor_encoder_location[2];
-//extern volatile float motor_encoder_speed[2];
 extern volatile int16 motor_encoder_offset[2];
 
 void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max);

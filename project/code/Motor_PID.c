@@ -3,10 +3,8 @@
 Motor_PID_Struct Motor_Left_PID;
 Motor_PID_Struct Motor_Right_PID;
 
-//volatile float motor_target_speed[2]        = {0, 0};
 volatile float motor_target_offset[2]       = {0, 0};
 volatile int16 motor_encoder_location[2]    = {0, 0};
-//volatile float motor_encoder_speed[2]       = {0, 0};
 volatile int16 motor_encoder_offset[2]          = {0, 0};
 
 static float Motor_PID_Limit (float value, float limit)         // 积分及输出限幅函数
@@ -27,22 +25,6 @@ static float Motor_PID_Limit (float value, float limit)         // 积分及输�
 
     return value;
 }
-
-// static float Motor_PID_Feedforward_Calc (float target, int8 motor)
-// {
-//     float duty = 0;
-
-//     if(motor == LEFT_MOTOR)
-//     {
-//         duty = target / MOTOR_LEFT_OFFSET_PER_DUTY;
-//     }
-//     else if(motor == RIGHT_MOTOR)
-//     {
-//         duty = target / MOTOR_RIGHT_OFFSET_PER_DUTY;
-//     }
-
-//     return duty;
-// }
 
 void Motor_PID_Init (Motor_PID_Struct *pid, float kp, float ki, float kd, float output_max, float integral_max)
 {

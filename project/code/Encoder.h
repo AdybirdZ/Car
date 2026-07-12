@@ -10,6 +10,5 @@
 #define ENCODER_SPEED_OFFSET_MAX   (3800.0f)
 
 void Encoder_Init ();
-//float Encoder_Offset_To_Speed (int16 offset);
 
 #endif

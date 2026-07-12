@@ -59,8 +59,6 @@ int main (void)
     Motor_PID_Init(&Motor_Left_PID, 0.02f, 0.016f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
     Motor_PID_Init(&Motor_Right_PID, 0.03f, 0.024f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
 
-    // motor_target_speed[LEFT_MOTOR] = 15.0f;
-    // motor_target_speed[RIGHT_MOTOR] = 15.0f;
     motor_target_offset[LEFT_MOTOR] = MOTOR_PID_TARGET_OFFSET;
     motor_target_offset[RIGHT_MOTOR] = MOTOR_PID_TARGET_OFFSET;
 
@@ -73,11 +71,10 @@ int main (void)
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    // Set_PWM(9.5, LEFT_MOTOR);
-    // Set_PWM(15.7, RIGHT_MOTOR);
-
     while(true)
     {
+        // 此处编写需要循环执行的代码
+
         if(pit_flag)
         {
             pit_flag = 0;
@@ -90,13 +87,7 @@ int main (void)
             }
         }
 
-        // motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
-        // motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
-        // motor_encoder_speed[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
-        // motor_encoder_speed[RIGHT_MOTOR] = absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);
-        // WIFI_Oscilloscope_Process();
         system_delay_ms(20);
-        // 此处编写需要循环执行的代码
 
         // 此处编写需要循环执行的代码
     }
