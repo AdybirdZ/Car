@@ -56,8 +56,8 @@ int main (void)
     Encoder_Init();
     WIFI_Init();
 
-    Motor_PID_Init(&Motor_Left_PID, 0.025f, 0.0f, 0.0f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
-    Motor_PID_Init(&Motor_Right_PID, 0.027f, 0.0f, 0.0f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+    Motor_PID_Init(&Motor_Left_PID, 0.02f, 0.013f, 0.0f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+    Motor_PID_Init(&Motor_Right_PID, 0.03f, 0.016f, 0.0f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
 
     // motor_target_speed[LEFT_MOTOR] = 15.0f;
     // motor_target_speed[RIGHT_MOTOR] = 15.0f;

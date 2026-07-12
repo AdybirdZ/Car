@@ -101,6 +101,15 @@ float Motor_PID_Control (Motor_PID_Struct *pid, float target, float actual, int8
 {
     float duty = Motor_PID_Calc(pid, target, actual);
 
+    if(target > 0 && duty < 0)          // 防止电机突然反转，造成电流过大烧毁电机
+    {
+        duty = 0;
+    }
+    else if(target < 0 && duty > 0)
+    {
+        duty = 0;
+    }
+
     Set_PWM(duty, motor);
 
     return motor_pwm_duty[motor];
