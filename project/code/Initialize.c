@@ -5,6 +5,12 @@ void Init ()
     clock_init(SYSTEM_CLOCK_80M);
     debug_init();
     Light_and_Buzz_Init();
+
+    if(enable_gray)
+    {
+        Gray_Init();
+    }
+
     if(enable_position)
     {
         Position_Init();

@@ -1,6 +1,7 @@
 #include "Motor.h"
 #include "Motor_PID.h"
 #include "Position.h"
+#include "Gray.h"
 #include "WIFI.h"
 
 #define LEFT_KP_INDEX      (2)
@@ -90,6 +91,12 @@ void WIFI_Oscilloscope_Process ()
         seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[ROLL];
         seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[PITCH];
         seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[YAW];
+    }
+
+    if(enable_gray && channel_num < SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_COUNT)
+    {
+        Gray_Update();
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = gray_value;
     }
 
     if(channel_num)
