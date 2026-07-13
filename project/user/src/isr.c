@@ -30,18 +30,26 @@
 ********************************************************************************************************************/
 
 #include "Motor_PID.h"
+#include "Angle_PID.h"
 #include "Position.h"
+#include "Gray_Line.h"
 #include "isr.h"
 
 volatile uint8 pit_flag = 0;
 
-void motor_pid_pit_handler (uint32 event, void *ptr)
+void pit_handler (uint32 event, void *ptr)
 {
     (void)event;            // 暂时无需判断中断触发源，直接丢弃
 
     *((volatile uint8 *)ptr) = 1;
 
-    if(enable_motor_output)
+    if(enable_position)
+    {
+        Position_Update();
+        angle_actual = euler_angle[YAW];
+    }
+
+    if(enable_motor_output && (enable_motor_pid || enable_angle_pid))
     {
         motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
         motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
@@ -49,13 +57,25 @@ void motor_pid_pit_handler (uint32 event, void *ptr)
         motor_encoder_offset[LEFT_MOTOR] = absolute_encoder_get_offset(LEFT_ENCODER_INDEX);
         motor_encoder_offset[RIGHT_MOTOR] = - absolute_encoder_get_offset(RIGHT_ENCODER_INDEX);          // 右轮编码器正转反而是减小
 
-        motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor_Left_PID, motor_target_offset[LEFT_MOTOR], motor_encoder_offset[LEFT_MOTOR], LEFT_MOTOR);
-        motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor_Right_PID, motor_target_offset[RIGHT_MOTOR], motor_encoder_offset[RIGHT_MOTOR], RIGHT_MOTOR);
-    }
+        if(enable_angle_pid)
+        {
+            Angle_PID_Control(&Angle_PID, angle_target, angle_actual);
+        }
+        else if(enable_motor_pid)
+        {
+            if(enable_gray)
+            {
+                Gray_Line_Update_Target();
+            }
 
-    if(enable_position)
+            motor_pwm_duty[LEFT_MOTOR] = Motor_PID_Control(&Motor_Left_PID, motor_target_offset[LEFT_MOTOR], motor_encoder_offset[LEFT_MOTOR], LEFT_MOTOR);
+            motor_pwm_duty[RIGHT_MOTOR] = Motor_PID_Control(&Motor_Right_PID, motor_target_offset[RIGHT_MOTOR], motor_encoder_offset[RIGHT_MOTOR], RIGHT_MOTOR);
+        }
+    }
+    else if(enable_motor_output)
     {
-        Position_Update();
+        Set_PWM(0, LEFT_MOTOR);
+        Set_PWM(0, RIGHT_MOTOR);
     }
 }
 

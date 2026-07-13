@@ -5,7 +5,7 @@
 #include "Motor.h"
 
 #define MOTOR_PID_PERIOD_MS        (20)
-#define MOTOR_PID_TARGET_OFFSET    (500.0f)
+#define MOTOR_PID_TARGET_OFFSET    (300.0f)
 #define MOTOR_PID_INTEGRAL_MAX     (1000.0f)
 
 typedef struct
@@ -27,6 +27,7 @@ typedef struct
 
 extern Motor_PID_Struct Motor_Left_PID;
 extern Motor_PID_Struct Motor_Right_PID;
+extern bool enable_motor_pid;
 extern volatile float motor_target_offset[2];
 extern volatile int16 motor_encoder_location[2];
 extern volatile int16 motor_encoder_offset[2];
