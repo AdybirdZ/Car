@@ -1,4 +1,5 @@
 #include "Motor.h"
+#include "Motor_PID.h"
 
 bool enable_motor_output = true;
 volatile float motor_pwm_duty[2] = {0, 0};
@@ -63,4 +64,16 @@ void Set_PWM (float duty, int8 motor)
             pwm_set_duty(MOTOR1_PWM, (-duty) * (PWM_DUTY_MAX / 100));               // 计算占空比
         }
     }
+}
+
+void Motor_Stop ()
+{
+    motor_target_offset[LEFT_MOTOR] = 0;        // 目标速度归零
+    motor_target_offset[RIGHT_MOTOR] = 0;
+
+    Motor_PID_Clear(&Motor_Left_PID);           // 清空左轮 PID 状态
+    Motor_PID_Clear(&Motor_Right_PID);          // 清空右轮 PID 状态
+
+    Set_PWM(0, LEFT_MOTOR);                     // 立即切断左轮 PWM
+    Set_PWM(0, RIGHT_MOTOR);                    // 立即切断右轮 PWM
 }
