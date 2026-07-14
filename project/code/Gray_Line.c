@@ -4,7 +4,7 @@ bool enable_gray_line = true;
 uint8 gray_line_black_level = 0;
 uint8 gray_line_found = 0;
 
-float gray_line_weight[GRAY_LINE_WEIGHT_NUM] = {-8.0f, -5.0f, -1.5f, 0.0f, 0.0f, 1.5f, 5.0f, 8.0f};     // 各个通道的权重
+float gray_line_weight[GRAY_LINE_WEIGHT_NUM] = {-9.0f, -6.0f, -1.5f, 0.0f, 0.0f, 1.5f, 6.0f, 9.0f};     // 各个通道的权重
 float gray_line_k = 40.0f;
 float gray_line_base_offset = MOTOR_PID_TARGET_OFFSET;
 float gray_line_error = 0.0f;
