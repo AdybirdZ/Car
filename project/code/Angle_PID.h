@@ -5,7 +5,7 @@
 
 #define ANGLE_PID_PERIOD_MS         (20)
 #define ANGLE_PID_INTEGRAL_MAX      (100.0f)
-#define ANGLE_PID_TARGET_DEFAULT    (180.0f)
+#define ANGLE_PID_TARGET_DEFAULT    (0.0f)
 
 typedef struct
 {

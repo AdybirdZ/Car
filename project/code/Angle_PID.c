@@ -27,12 +27,12 @@ static float Angle_PID_Limit (float value, float limit)           // 积分及�
 
 float Angle_Normalize (float angle)
 {
-    while(angle >= 540.0f)
+    while(angle >= 360.0f)
     {
         angle -= 360.0f;
     }
 
-    while(angle < 180.0f)
+    while(angle < 0.0f)
     {
         angle += 360.0f;
     }
@@ -62,8 +62,8 @@ void Angle_PID_Structure_Init (Angle_PID_Struct *pid, float kp, float ki, float 
     pid->ki = ki;
     pid->kd = kd;
 
-    pid->target = 180;
-    pid->actual = 180;
+    pid->target = ANGLE_PID_TARGET_DEFAULT;
+    pid->actual = ANGLE_PID_TARGET_DEFAULT;
     pid->err = 0;
     pid->err_last = 0;
     pid->integral = 0;
@@ -87,8 +87,8 @@ void Angle_PID_Set (Angle_PID_Struct *pid, float kp, float ki, float kd)
 
 void Angle_PID_Clear (Angle_PID_Struct *pid)
 {
-    pid->target = 180;
-    pid->actual = 180;
+    pid->target = ANGLE_PID_TARGET_DEFAULT;
+    pid->actual = ANGLE_PID_TARGET_DEFAULT;
     pid->err = 0;
     pid->err_last = 0;
     pid->integral = 0;

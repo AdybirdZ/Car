@@ -52,6 +52,7 @@ int main (void)
         if(pit_flag)
         {
             pit_flag = 0;
+            Task_Update();
             oscilloscope_count ++;
 
             if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
@@ -61,7 +62,7 @@ int main (void)
             }
         }
 
-        system_delay_ms(20);
+        system_delay_ms(MOTOR_PID_PERIOD_MS);
 
         // 此处编写需要循环执行的代码
     }
