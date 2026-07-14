@@ -3,6 +3,7 @@
 Motor_PID_Struct Motor_Left_PID;
 Motor_PID_Struct Motor_Right_PID;
 
+bool enable_motor_pid = true;
 volatile float motor_target_offset[2]       = {0, 0};
 volatile int16 motor_encoder_location[2]    = {0, 0};
 volatile int16 motor_encoder_offset[2]      = {0, 0};

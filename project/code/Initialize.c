@@ -23,6 +23,7 @@ void Init ()
         Motor_PID_Structure_Init(&Motor_Left_PID, 0.02f, 0.016f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
         Motor_PID_Structure_Init(&Motor_Right_PID, 0.03f, 0.024f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
         Motor_PID_Target_Init(MOTOR_PID_TARGET_OFFSET);
+        Angle_PID_Structure_Init(&Angle_PID, 0.5f, 0.0f, 0.0f, PWM_MAX, ANGLE_PID_INTEGRAL_MAX);
         absolute_encoder_get_location(LEFT_ENCODER_INDEX);
         absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
     }
@@ -32,6 +33,6 @@ void Init ()
         WIFI_Init();
     }
 
-    pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, motor_pid_pit_handler, (void *)&pit_flag);
+    pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, pit_handler, (void *)&pit_flag);
     interrupt_global_enable(0);
 }
