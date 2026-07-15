@@ -3,6 +3,7 @@
 bool enable_task = true;
 uint16 task_all_white_count = 0;
 uint8 task_turn_lock = 0;
+float task_turn_target_angle = 0.0f;
 
 static uint8 Task_Is_All_White ()
 {
@@ -18,6 +19,7 @@ void Task_Init ()
 {
     task_all_white_count = 0;
     task_turn_lock = 0;
+    task_turn_target_angle = 0.0f;
 
     if(enable_task)
     {
@@ -57,7 +59,8 @@ void Task_Update ()
     {
         task_all_white_count = 0;
         task_turn_lock = 1;
-        Action_Turn_Left();
+        task_turn_target_angle = Angle_Normalize(task_turn_target_angle - TASK_LEFT_TURN_ANGLE);
+        Action_Turn_To(task_turn_target_angle);
         enable_motor_pid = true;
         enable_angle_pid = false;
         enable_gray_line = true;

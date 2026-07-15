@@ -1,13 +1,12 @@
 #include "Action.h"
 
-uint8 Action_Turn (float angle)
+uint8 Action_Turn_To (float target)
 {
     uint16 timeout_count = 0;
     uint8 stable_count = 0;
     uint8 last_enable_motor_pid = enable_motor_pid;
     uint8 last_enable_angle_pid = enable_angle_pid;
     uint8 last_enable_gray_line = enable_gray_line;
-    float target = 0.0f;
     float error = 0.0f;
 
     if(!enable_motor_output || !enable_position)
@@ -17,7 +16,7 @@ uint8 Action_Turn (float angle)
 
     Position_Update();
     angle_actual = euler_angle[YAW];
-    target = Angle_Normalize(angle_actual + angle);
+    target = Angle_Normalize(target);
 
     Angle_PID_Clear(&Angle_PID);
     Angle_PID_Target_Init(target);
@@ -56,6 +55,14 @@ uint8 Action_Turn (float angle)
     enable_gray_line = last_enable_gray_line;
 
     return (stable_count >= ACTION_TURN_STABLE_COUNT);
+}
+
+uint8 Action_Turn (float angle)
+{
+    Position_Update();
+    angle_actual = euler_angle[YAW];
+
+    return Action_Turn_To(angle_actual + angle);
 }
 
 uint8 Action_Turn_Right ()

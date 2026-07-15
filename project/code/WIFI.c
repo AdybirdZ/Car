@@ -1,6 +1,7 @@
 #include "Motor.h"
 #include "Motor_PID.h"
 #include "Position.h"
+#include "Angle_PID.h"
 #include "Gray.h"
 #include "WIFI.h"
 
@@ -11,13 +12,17 @@
 #define LEFT_KD_INDEX      (6)
 #define RIGHT_KD_INDEX     (7)
 
+#define ANGLE_KP_INDEX     (2)
+#define ANGLE_KI_INDEX     (3)
+#define ANGLE_KD_INDEX     (4)
+
 uint8 oscilloscope_count = 0;
 bool enable_WIFI = true;
 bool enable_parameter_process = true;      // 是否启用PID调参模式
 
 static void WIFI_Parameter_Process ()
 {
-    if(seekfree_assistant_parameter_update_flag[LEFT_KP_INDEX])
+    /*if(seekfree_assistant_parameter_update_flag[LEFT_KP_INDEX])
     {
         seekfree_assistant_parameter_update_flag[LEFT_KP_INDEX] = 0;
         Motor_PID_Set(&Motor_Left_PID, seekfree_assistant_parameter[LEFT_KP_INDEX], Motor_Left_PID.ki, Motor_Left_PID.kd);
@@ -51,6 +56,24 @@ static void WIFI_Parameter_Process ()
     {
         seekfree_assistant_parameter_update_flag[RIGHT_KD_INDEX] = 0;
         Motor_PID_Set(&Motor_Right_PID, Motor_Right_PID.kp, Motor_Right_PID.ki, seekfree_assistant_parameter[RIGHT_KD_INDEX]);
+    }*/
+
+    if(seekfree_assistant_parameter_update_flag[ANGLE_KP_INDEX])
+    {
+        seekfree_assistant_parameter_update_flag[ANGLE_KP_INDEX] = 0;
+        Angle_PID_Set(&Angle_PID, seekfree_assistant_parameter[ANGLE_KP_INDEX], Angle_PID.ki, Angle_PID.kd);
+    }
+
+    if(seekfree_assistant_parameter_update_flag[ANGLE_KI_INDEX])
+    {
+        seekfree_assistant_parameter_update_flag[ANGLE_KI_INDEX] = 0;
+        Angle_PID_Set(&Angle_PID, Angle_PID.kp, seekfree_assistant_parameter[ANGLE_KI_INDEX], Angle_PID.kd);
+    }
+
+    if(seekfree_assistant_parameter_update_flag[ANGLE_KD_INDEX])
+    {
+        seekfree_assistant_parameter_update_flag[ANGLE_KD_INDEX] = 0;
+        Angle_PID_Set(&Angle_PID, Angle_PID.kp, Angle_PID.ki, seekfree_assistant_parameter[ANGLE_KD_INDEX]);
     }
 }
 
@@ -80,16 +103,16 @@ void WIFI_Oscilloscope_Process ()
         return;
     }
 
-    if(enable_motor_output)
+    /*if(enable_motor_output)
     {
         seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[LEFT_MOTOR];
         seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[RIGHT_MOTOR];
-    }
+    }*/
 
     if(enable_position)
     {
-        seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[ROLL];
-        seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[PITCH];
+        //seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[ROLL];
+        //seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[PITCH];
         seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[YAW];
     }
 
