@@ -14,6 +14,7 @@
 #include "Task.h"
 #include "Position.h"
 #include "WIFI.h"
+#include "Serial.h"
 
 void Init ();
 

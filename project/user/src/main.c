@@ -41,6 +41,8 @@
 // **************************** 代码区域 ****************************
 int main (void)
 {
+    char serial_test_buffer[SERIAL_BUFFER_SIZE] = {0};
+
     Init();
 
     // 此处编写用户代码 例如外设初始化代码等
@@ -48,6 +50,8 @@ int main (void)
     while(true)
     {
         // 此处编写需要循环执行的代码
+
+        Serial_Process();
 
         if(pit_flag)
         {
@@ -59,6 +63,20 @@ int main (void)
             {
                 oscilloscope_count = 0;
                 WIFI_Oscilloscope_Process();
+            }
+
+            if(Serial_Get_Message(serial_test_buffer, SERIAL_BUFFER_SIZE))
+            {
+                Serial_Send_Message(serial_test_buffer);
+
+                if('1' == serial_test_buffer[0])
+                {
+                    Buzz(1);
+                }
+                else if('0' == serial_test_buffer[0])
+                {
+                    Buzz(0);
+                }
             }
         }
 

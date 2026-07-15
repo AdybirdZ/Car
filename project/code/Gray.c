@@ -1,6 +1,6 @@
 #include "Gray.h"
 
-bool enable_gray = true;
+bool enable_gray = true;            // 注意：若此项为true则必须接好灰度传感器，否则会因为收不到第一组数据而卡死在初始化环节
 bool gray_data_ready = false;
 uint8 gray_value = 0;
 uint8 gray_data[GRAY_CHANNEL_NUM] = {0};

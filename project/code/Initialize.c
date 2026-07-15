@@ -36,6 +36,11 @@ void Init ()
         WIFI_Init();
     }
 
+    if(enable_serial)
+    {
+        Serial_Init();
+    }
+
     pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, pit_handler, (void *)&pit_flag);
     interrupt_global_enable(0);
 }
