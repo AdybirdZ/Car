@@ -17,7 +17,7 @@
 #define ANGLE_KD_INDEX     (4)
 
 uint8 oscilloscope_count = 0;
-bool enable_WIFI = true;
+bool enable_WIFI = false;
 bool enable_parameter_process = true;      // 是否启用PID调参模式
 
 static void WIFI_Parameter_Process ()
