@@ -1,6 +1,7 @@
 #include "Gray.h"
 
 bool enable_gray = true;
+bool gray_data_ready = false;
 uint8 gray_value = 0;
 uint8 gray_data[GRAY_CHANNEL_NUM] = {0};
 
@@ -45,8 +46,28 @@ void Gray_Update ()
 
     gray_value = Gray_Read();
 
+    if(GRAY_INVALID_VALUE != gray_value)
+    {
+        gray_data_ready = true;
+    }
+
     for(i = 0; i < GRAY_CHANNEL_NUM; i++)
     {
         gray_data[i] = (gray_value >> i) & 0x01;
+    }
+}
+
+void Gray_Wait_First_Data ()        // 等待灰度传感器初始化完毕，否则上电后电机会短暂乱转
+{
+    if(!enable_gray)
+    {
+        gray_data_ready = true;
+        return;
+    }
+
+    while(!gray_data_ready)
+    {
+        Gray_Update();
+        system_delay_ms(5);
     }
 }

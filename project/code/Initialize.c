@@ -9,6 +9,7 @@ void Init ()
     if(enable_gray)
     {
         Gray_Init();
+        Gray_Wait_First_Data();
     }
 
     Task_Init();

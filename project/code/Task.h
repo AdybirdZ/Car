@@ -6,7 +6,7 @@
 #include "Gray_Line.h"
 #include "Motor_PID.h"
 
-#define TASK_ALL_WHITE_MS              (230)
+#define TASK_ALL_WHITE_MS              (150)
 #define TASK_ALL_WHITE_COUNT           ((TASK_ALL_WHITE_MS + MOTOR_PID_PERIOD_MS - 1) / MOTOR_PID_PERIOD_MS)
 #define TASK_LEFT_TURN_ANGLE           (90.0f)
 
