@@ -34,6 +34,7 @@
 #include "Position.h"
 #include "Gray_Line.h"
 #include "isr.h"
+#include "Gimbal.h"
 
 volatile uint8 pit_flag = 0;
 
@@ -149,7 +150,9 @@ void UART1_IRQHandler (void)
 					
 					 //wifi_uart_callback();
 			
+#if !GIMBAL_TEST_MODE
 			wireless_module_uart_handler();                 // ??????????
+#endif
 					
         }break;
 

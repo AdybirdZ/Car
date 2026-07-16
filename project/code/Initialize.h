@@ -15,6 +15,7 @@
 #include "Position.h"
 #include "WIFI.h"
 #include "Serial.h"
+#include "Gimbal.h"
 
 void Init ();
 

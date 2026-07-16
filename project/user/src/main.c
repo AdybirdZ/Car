@@ -41,6 +41,14 @@
 // **************************** 代码区域 ****************************
 int main (void)
 {
+#if GIMBAL_TEST_MODE
+    Init();
+
+    while(true)
+    {
+        Gimbal_Test_Process();
+    }
+#else
     char serial_test_buffer[SERIAL_BUFFER_SIZE] = {0};
 
     Init();
@@ -84,4 +92,5 @@ int main (void)
 
         // 此处编写需要循环执行的代码
     }
+#endif
 }

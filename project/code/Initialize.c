@@ -4,6 +4,13 @@ void Init ()
 {
     clock_init(SYSTEM_CLOCK_80M);
     debug_init();
+
+#if GIMBAL_TEST_MODE
+    Gimbal_Init();
+    interrupt_global_enable(0);
+    return;
+#endif
+
     Light_and_Buzz_Init();
 
     if(enable_gray)
