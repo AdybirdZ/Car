@@ -3,7 +3,7 @@
 
 #include "zf_common_headfile.h"
 
-#define GIMBAL_TEST_MODE              (1)
+#define GIMBAL_TEST_MODE              (0)
 
 #define GIMBAL_UART_INDEX             (UART_1)
 #define GIMBAL_UART_TX_PIN            (UART1_TX_B4)
@@ -15,6 +15,7 @@
 #define GIMBAL_TEST_SPEED_RPM         (30)
 #define GIMBAL_TEST_STEP_DELAY_MS     (2500)
 
+// 以下为可选的舵机模式
 #define GIMBAL_MODE_SPEED             (0x0000)
 #define GIMBAL_MODE_MULTI_POSITION    (0x0001)
 #define GIMBAL_MODE_SINGLE_POSITION   (0x0002)

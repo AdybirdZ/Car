@@ -85,6 +85,16 @@ void Serial_Process (void)
     // UART2 RX interrupt handles receiving.
 }
 
+void Serial_Send_Byte (uint8 data)
+{
+    if(!enable_serial)
+    {
+        return;
+    }
+
+    uart_write_byte(SERIAL_INDEX, data);
+}
+
 void Serial_Send_Message (const char *str)
 {
     if(!enable_serial || NULL == str)
@@ -92,9 +102,9 @@ void Serial_Send_Message (const char *str)
         return;
     }
 
-    uart_write_byte(SERIAL_INDEX, SERIAL_START_CHAR);
+    Serial_Send_Byte(SERIAL_START_CHAR);
     uart_write_string(SERIAL_INDEX, str);
-    uart_write_byte(SERIAL_INDEX, SERIAL_END_CHAR);
+    Serial_Send_Byte(SERIAL_END_CHAR);
 }
 
 uint8 Serial_Get_Message (char *buffer, uint16 buffer_size)

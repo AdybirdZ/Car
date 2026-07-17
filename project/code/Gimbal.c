@@ -289,7 +289,7 @@ void Gimbal_Test_Process (void)
             printf("等待初始化完毕\r\n");
             system_delay_ms(500);
         }
-        return;
+        return;                                 // 避免长时间阻塞主函数
     }
 
     servo_1_target_x10 = servo_1_baseline_x10 + step->servo_1_angle_x10;
@@ -320,6 +320,7 @@ void Gimbal_Test_Process (void)
     }
 
     test_step++;
+
     if((sizeof(gimbal_test_steps) / sizeof(gimbal_test_steps[0])) <= test_step)
     {
         test_step = 0;

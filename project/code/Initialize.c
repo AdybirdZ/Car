@@ -11,6 +11,14 @@ void Init ()
     return;
 #endif
 
+    // Start K230 before vehicle motors and their control interrupts add load.
+    if(enable_serial)
+    {
+        Serial_Init();
+        system_delay_ms(K230_START_DELAY_MS);
+        Serial_Send_Byte(K230_START_COMMAND);
+    }
+
     Light_and_Buzz_Init();
 
     if(enable_gray)
@@ -41,11 +49,6 @@ void Init ()
     if(enable_WIFI)
     {
         WIFI_Init();
-    }
-
-    if(enable_serial)
-    {
-        Serial_Init();
     }
 
     pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, pit_handler, (void *)&pit_flag);

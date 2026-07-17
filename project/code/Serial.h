@@ -10,6 +10,8 @@
 #define SERIAL_START_CHAR        ('#')
 #define SERIAL_END_CHAR          ('$')
 #define SERIAL_BUFFER_SIZE       (64)
+#define K230_START_COMMAND       ('s')
+#define K230_START_DELAY_MS      (5000)
 
 extern bool enable_serial;
 extern volatile uint8 serial_rx_finish;
@@ -18,6 +20,7 @@ extern char serial_rx_buffer[SERIAL_BUFFER_SIZE];
 
 void Serial_Init (void);
 void Serial_Process (void);
+void Serial_Send_Byte (uint8 data);
 void Serial_Send_Message (const char *str);
 uint8 Serial_Get_Message (char *buffer, uint16 buffer_size);
 

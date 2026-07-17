@@ -73,7 +73,7 @@ int main (void)
                 WIFI_Oscilloscope_Process();
             }
 
-            if(Serial_Get_Message(serial_test_buffer, SERIAL_BUFFER_SIZE))
+            /*if(Serial_Get_Message(serial_test_buffer, SERIAL_BUFFER_SIZE))
             {
                 Serial_Send_Message(serial_test_buffer);
 
@@ -85,7 +85,7 @@ int main (void)
                 {
                     Buzz(0);
                 }
-            }
+            }*/
         }
 
         system_delay_ms(MOTOR_PID_PERIOD_MS);
