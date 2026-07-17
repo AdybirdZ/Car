@@ -12,11 +12,23 @@
 #define SERIAL_BUFFER_SIZE       (64)
 #define K230_START_COMMAND       ('s')
 #define K230_START_DELAY_MS      (5000)
+#define K230_LINE_INPUT_LIMIT    (30)
+#define K230_LINE_WEIGHT_LIMIT   (9.0f)
+#define K230_LINE_CORRECT_K      (40.0f)
+#define K230_LINE_TIMEOUT_COUNT  (25)
 
 extern bool enable_serial;
+extern bool enable_k230_line;
 extern volatile uint8 serial_rx_finish;
 extern volatile uint16 serial_rx_length;
 extern char serial_rx_buffer[SERIAL_BUFFER_SIZE];
+extern volatile int16 k230_line_raw;
+extern volatile int16 k230_line_tens;
+extern volatile uint8 k230_line_online;
+extern float k230_line_weight;
+extern float k230_line_correct_offset;
+extern float k230_line_left_target;
+extern float k230_line_right_target;
 
 void Serial_Init (void);
 void Serial_Process (void);

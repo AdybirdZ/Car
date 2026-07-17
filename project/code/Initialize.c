@@ -11,7 +11,7 @@ void Init ()
     return;
 #endif
 
-    // Start K230 before vehicle motors and their control interrupts add load.
+    // K230必须在电机之前启动，否则K230无法启动
     if(enable_serial)
     {
         Serial_Init();
@@ -21,7 +21,7 @@ void Init ()
 
     Light_and_Buzz_Init();
 
-    if(enable_gray)
+    if(enable_gray && !enable_k230_line)
     {
         Gray_Init();
         Gray_Wait_First_Data();
@@ -40,7 +40,7 @@ void Init ()
         Encoder_Init();
         Motor_PID_Structure_Init(&Motor_Left_PID, 0.02f, 0.026f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
         Motor_PID_Structure_Init(&Motor_Right_PID, 0.03f, 0.028f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
-        Motor_PID_Target_Init(MOTOR_PID_TARGET_OFFSET);
+        Motor_PID_Target_Init(enable_k230_line ? 0.0f : MOTOR_PID_TARGET_OFFSET);
         Angle_PID_Structure_Init(&Angle_PID, 0.06f, 0.1f, 0.4f, PWM_MAX, ANGLE_PID_INTEGRAL_MAX);
         absolute_encoder_get_location(LEFT_ENCODER_INDEX);
         absolute_encoder_get_location(RIGHT_ENCODER_INDEX);

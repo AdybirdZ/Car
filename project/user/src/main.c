@@ -64,7 +64,10 @@ int main (void)
         if(pit_flag)
         {
             pit_flag = 0;
-            Task_Update();
+            if(!enable_k230_line)
+            {
+                Task_Update();
+            }
             oscilloscope_count ++;
 
             if(OSCILLOSCOPE_FREQ <= oscilloscope_count)

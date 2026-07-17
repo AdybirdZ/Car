@@ -35,6 +35,7 @@
 #include "Gray_Line.h"
 #include "isr.h"
 #include "Gimbal.h"
+#include "Serial.h"
 
 volatile uint8 pit_flag = 0;
 
@@ -64,7 +65,7 @@ void pit_handler (uint32 event, void *ptr)
         }
         else if(enable_motor_pid)
         {
-            if(enable_gray)
+            if(!enable_k230_line && enable_gray)
             {
                 Gray_Line_Update_Target();
             }
