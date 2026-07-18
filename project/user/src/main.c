@@ -39,16 +39,41 @@
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 
 // **************************** 代码区域 ****************************
+
+char serial_test_buffer[SERIAL_BUFFER_SIZE] = {0};
+int8 status = 0;
+uint16 count = 0;
+
 int main (void)
 {
-#if GIMBAL_TEST_MODE
-    Init();
+    #if K230_TEST_MODE
+        Init();
 
-    while(true)
-    {
-        Gimbal_Test_Process();
-    }
-#else
+        while(true)
+        {
+            if(pit_flag)
+            {
+                pit_flag = 0;
+
+                if(Serial_Get_Message(serial_test_buffer, SERIAL_BUFFER_SIZE))
+                {
+                    if(count > 500)
+                    {
+                        status = !status;
+                        count = 0;
+                    }
+
+                    printf("%s\r\n", serial_test_buffer);
+                    Buzz(status);
+
+                    count++;
+                }
+            }
+
+            system_delay_ms(1);
+        }
+    #else
+
     char serial_test_buffer[SERIAL_BUFFER_SIZE] = {0};
 
     Init();
