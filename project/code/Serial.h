@@ -7,14 +7,14 @@
 #define SERIAL_TX_PIN            (UART2_TX_B15)
 #define SERIAL_RX_PIN            (UART2_RX_B16)
 #define SERIAL_BAUD              (115200)
-#define SERIAL_START_CHAR        ('#')
-#define SERIAL_END_CHAR          ('$')
+#define SERIAL_START_CHAR        ('#')                  // K230返回数据第一位为#
+#define SERIAL_END_CHAR          ('$')                  // K230返回数据最后一位为$
 #define SERIAL_BUFFER_SIZE       (64)
-#define K230_START_COMMAND       ('s')
+#define K230_START_COMMAND       ('s')                  // 启动K230发送s
 #define K230_START_DELAY_MS      (5000)
-#define K230_LINE_INPUT_LIMIT    (30)
-#define K230_LINE_WEIGHT_LIMIT   (9.0f)
-#define K230_LINE_CORRECT_K      (40.0f)
+#define K230_LINE_INPUT_LIMIT    (30)                   // 300以外的值被丢弃，300除以10为30
+#define K230_LINE_WEIGHT_LIMIT   (9.0f)                 // 与灰度传感器巡线一样，权重最大为9
+#define K230_LINE_CORRECT_K      (40.0f)                // 与灰度传感器巡线一样，k为40
 #define K230_LINE_TIMEOUT_COUNT  (25)
 
 extern bool enable_serial;
