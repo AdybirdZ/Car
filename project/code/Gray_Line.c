@@ -12,11 +12,20 @@ float gray_line_correct_offset = 0.0f;
 float gray_line_left_target = MOTOR_PID_TARGET_OFFSET;
 float gray_line_right_target = MOTOR_PID_TARGET_OFFSET;
 
+/*
+函数功能：返回value的绝对值
+参数：
+value：任意浮点数
+*/
 static float Gray_Line_Abs (float value)
 {
     return (value < 0.0f) ? -value : value;
 }
 
+/*
+函数功能：灰度巡线目标更新：读传感器→找黑线→计算差速→写入电机目标
+参数：无
+*/
 void Gray_Line_Update_Target ()
 {
     uint8 i = 0;
