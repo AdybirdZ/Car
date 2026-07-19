@@ -1,5 +1,10 @@
 #include "Action.h"
 
+/*
+函数功能：原地旋转到指定朝向，返回值为0或1（1表示转到位了，0表示超时或没转到位）
+参数：
+target：绝对目标角度（范围在0°-360°之间）
+*/
 uint8 Action_Turn_To (float target)
 {
     uint16 timeout_count = 0;
@@ -57,6 +62,11 @@ uint8 Action_Turn_To (float target)
     return (stable_count >= ACTION_TURN_STABLE_COUNT);
 }
 
+/*
+函数功能：让小车原地转动指定角度（正数：向左转；负数：向右转）
+参数：
+angle：要转多少度
+*/
 uint8 Action_Turn (float angle)
 {
     Position_Update();
@@ -65,16 +75,27 @@ uint8 Action_Turn (float angle)
     return Action_Turn_To(angle_actual + angle);
 }
 
+/*
+函数功能：快捷右转90°
+参数：无
+*/
 uint8 Action_Turn_Right ()
 {
     return Action_Turn(ACTION_TURN_RIGHT_ANGLE);
 }
 
+/*
+函数功能：快捷左转90°
+参数：无
+*/
 uint8 Action_Turn_Left ()
 {
     return Action_Turn(ACTION_TURN_LEFT_ANGLE);
 }
 
+/*
+同Action_Turn，但不关心结果，无返回值
+*/
 void Turn (float angle)
 {
     (void)Action_Turn(angle);
