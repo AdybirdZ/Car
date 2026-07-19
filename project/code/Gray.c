@@ -5,6 +5,10 @@ bool gray_data_ready = false;
 uint8 gray_value = 0;
 uint8 gray_data[GRAY_CHANNEL_NUM] = {0};
 
+/*
+函数功能：灰度传感器初始化，配置CLK和DAT两个GPIO引脚
+参数：无
+*/
 void Gray_Init ()
 {
     if(!enable_gray)
@@ -16,6 +20,10 @@ void Gray_Init ()
     gpio_init(GRAY_CLK_PIN, GPO, GPIO_LOW, GPO_PUSH_PULL);
 }
 
+/*
+函数功能：灰度传感器读取，用软件模拟时钟脉冲，逐位读取8个通道的数据
+参数：无
+*/
 uint8 Gray_Read ()
 {
     uint8 value = 0;
@@ -35,6 +43,10 @@ uint8 Gray_Read ()
     return value;
 }
 
+/*
+函数功能：灰度数据更新（读一次传感器，把8位数据拆成8个通道数组）
+参数：无
+*/
 void Gray_Update ()
 {
     uint8 i = 0;
@@ -57,6 +69,10 @@ void Gray_Update ()
     }
 }
 
+/*
+函数功能：反复读取直到收到第一帧有效数据，否则直接跳过
+参数：无
+*/
 void Gray_Wait_First_Data ()        // 等待灰度传感器初始化完毕，否则上电后电机会短暂乱转
 {
     if(!enable_gray)
