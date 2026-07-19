@@ -17,8 +17,6 @@
 #define K230_LINE_CORRECT_K      (40.0f)                // 与灰度传感器巡线一样，k为40
 #define K230_LINE_TIMEOUT_COUNT  (25)
 
-#define K230_TEST_MODE           (1)
-
 extern bool enable_serial;
 extern bool enable_k230_line;
 extern volatile uint8 serial_rx_finish;

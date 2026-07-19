@@ -39,43 +39,8 @@
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 
 // **************************** 代码区域 ****************************
-
-char serial_test_buffer[SERIAL_BUFFER_SIZE] = {0};
-int8 status = 0;
-uint16 count = 0;
-
 int main (void)
 {
-    #if K230_TEST_MODE
-        Init();
-
-        while(true)
-        {
-            if(pit_flag)
-            {
-                pit_flag = 0;
-
-                if(Serial_Get_Message(serial_test_buffer, SERIAL_BUFFER_SIZE))
-                {
-                    if(count > 500)
-                    {
-                        status = !status;
-                        count = 0;
-                    }
-
-                    printf("%s\r\n", serial_test_buffer);
-                    Buzz(status);
-
-                    count++;
-                }
-            }
-
-            system_delay_ms(1);
-        }
-    #else
-
-    char serial_test_buffer[SERIAL_BUFFER_SIZE] = {0};
-
     Init();
 
     // 此处编写用户代码 例如外设初始化代码等
@@ -84,15 +49,15 @@ int main (void)
     {
         // 此处编写需要循环执行的代码
 
-        Serial_Process();
+        //Serial_Process();
 
         if(pit_flag)
         {
             pit_flag = 0;
-            if(!enable_k230_line)
+            /*if(!enable_k230_line)
             {
                 Task_Update();
-            }
+            }*/
             oscilloscope_count ++;
 
             if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
@@ -100,25 +65,10 @@ int main (void)
                 oscilloscope_count = 0;
                 WIFI_Oscilloscope_Process();
             }
-
-            /*if(Serial_Get_Message(serial_test_buffer, SERIAL_BUFFER_SIZE))
-            {
-                Serial_Send_Message(serial_test_buffer);
-
-                if('1' == serial_test_buffer[0])
-                {
-                    Buzz(1);
-                }
-                else if('0' == serial_test_buffer[0])
-                {
-                    Buzz(0);
-                }
-            }*/
         }
 
         system_delay_ms(MOTOR_PID_PERIOD_MS);
 
         // 此处编写需要循环执行的代码
     }
-#endif
 }

@@ -5,12 +5,6 @@ void Init ()
     clock_init(SYSTEM_CLOCK_80M);
     debug_init();
 
-#if GIMBAL_TEST_MODE
-    Gimbal_Init();
-    interrupt_global_enable(0);
-    return;
-#endif
-
     // K230必须在电机之前启动，否则K230无法启动
     if(enable_serial)
     {
@@ -27,7 +21,7 @@ void Init ()
         Gray_Wait_First_Data();
     }
 
-    Task_Init();
+    //Task_Init();
 
     if(enable_position)
     {
@@ -50,6 +44,12 @@ void Init ()
     {
         WIFI_Init();
     }
+
+    Gimbal_Init();
+
+    Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);
+    system_delay_ms(10);
+    Gimbal_Set_Multi_Position(GIMBAL_SERVO_2, GIMBAL_SERVO_2_VERTICAL_ANGLE_X10);
 
     pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, pit_handler, (void *)&pit_flag);
     interrupt_global_enable(0);

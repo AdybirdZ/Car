@@ -1,8 +1,8 @@
 #include "Serial.h"
 #include "Motor_PID.h"
 
-bool enable_serial = true;
-bool enable_k230_line = true;
+bool enable_serial = false;
+bool enable_k230_line = false;
 
 static char serial_parse_buffer[SERIAL_BUFFER_SIZE] = {0};
 static uint8 serial_receiving = 0;

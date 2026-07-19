@@ -254,8 +254,6 @@ void Gimbal_Init (void)
     system_delay_ms(10);
     Gimbal_Set_Speed(GIMBAL_SERVO_2, GIMBAL_TEST_SPEED_RPM);
     system_delay_ms(10);
-
-    printf("\r\nF32C云台测试开始：使用UART1的B4、B5，波特率115200\r\n");
 }
 
 void Gimbal_Test_Process (void)

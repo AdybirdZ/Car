@@ -151,10 +151,6 @@ void UART1_IRQHandler (void)
 					
 					 //wifi_uart_callback();
 			
-#if !GIMBAL_TEST_MODE
-			wireless_module_uart_handler();                 // ??????????
-#endif
-					
         }break;
 
 		default:    break;
