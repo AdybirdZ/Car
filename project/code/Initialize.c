@@ -1,5 +1,9 @@
 #include "Initialize.h"
 
+/*
+函数功能：系统初始化，按顺序启动所有外设和模块，贯穿上电到主函数的整个准备阶段
+参数：无
+*/
 void Init ()
 {
     clock_init(SYSTEM_CLOCK_80M);
