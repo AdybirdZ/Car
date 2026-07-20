@@ -5,6 +5,10 @@ uint16 task_all_white_count = 0;
 uint8 task_turn_lock = 0;
 float task_turn_target_angle = 0.0f;
 
+/*
+函数功能：全白检测，判断八路灰度传感器是否全部看到白色，返回1表示全白，返回0表示至少有一个传感器压到黑线
+参数：无
+*/
 static uint8 Task_Is_All_White ()
 {
     if(gray_line_black_level)
@@ -15,6 +19,10 @@ static uint8 Task_Is_All_White ()
     return (0xFF == gray_value);
 }
 
+/*
+函数功能：任务模块初始化，清零计数器和锁存标志，设定默认控制模式
+参数：无
+*/
 void Task_Init ()
 {
     task_all_white_count = 0;
@@ -29,6 +37,9 @@ void Task_Init ()
     }
 }
 
+/*
+函数功能：任务状态机更新（检测直角路口→触发转弯→恢复巡线）
+*/
 void Task_Update ()
 {
     if(!enable_task || !enable_gray)
