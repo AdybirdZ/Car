@@ -20,6 +20,10 @@ uint8 oscilloscope_count = 0;
 bool enable_WIFI = false;
 bool enable_parameter_process = true;      // 是否启用PID调参模式
 
+/*
+函数功能：WiFi在线调参，检测上位机传来的参数更新，实时写入PID参数
+参数：无
+*/
 static void WIFI_Parameter_Process ()
 {
     /*if(seekfree_assistant_parameter_update_flag[LEFT_KP_INDEX])
@@ -77,6 +81,10 @@ static void WIFI_Parameter_Process ()
     }
 }
 
+/*
+函数功能：WiFi模块初始化
+参数：无
+*/
 void WIFI_Init ()
 {
     while(wifi_spi_init(WIFI_SSID, WIFI_PASSWORD))
@@ -94,6 +102,10 @@ void WIFI_Init ()
     seekfree_assistant_interface_init(SEEKFREE_ASSISTANT_WIFI_SPI);         // 逐飞助手初始化
 }
 
+/*
+函数功能：WiFi示波器发送，把运行数据打包上传到上位机实时显示
+参数：无
+*/
 void WIFI_Oscilloscope_Process ()
 {
     uint8 channel_num = 0;
