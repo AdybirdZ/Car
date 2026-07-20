@@ -6,6 +6,10 @@
 bool enable_motor_output = true;
 volatile float motor_pwm_duty[2] = {0, 0};
 
+/*
+函数功能：电机初始化，配置左右轮的GPIO方向引脚和PWM输出
+参数：无
+*/
 void Motor_Init ()
 {
     // MOTOR1对应右轮，方向引脚默认输出高电平，PWM初始占空比为0
@@ -17,6 +21,12 @@ void Motor_Init ()
     pwm_init(MOTOR2_PWM, 17000, 0);
 }
 
+/*
+函数功能：设置电机PWM
+参数：
+duty：占空比
+motor：目标电机
+*/
 void Set_PWM (float duty, int8 motor)
 {
     if(!enable_motor_output)
@@ -74,6 +84,10 @@ void Set_PWM (float duty, int8 motor)
     }
 }
 
+/*
+函数功能：紧急停车，关闭所有闭环控制
+参数：无
+*/
 void Motor_Stop ()
 {
     // 停止闭环控制并清除目标，随后关闭两个PWM输出
