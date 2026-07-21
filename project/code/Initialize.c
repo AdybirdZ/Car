@@ -39,7 +39,7 @@ void Init ()
         Motor_PID_Structure_Init(&Motor_Left_PID, 0.02f, 0.026f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
         Motor_PID_Structure_Init(&Motor_Right_PID, 0.03f, 0.028f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
         Motor_PID_Target_Init(enable_k230_line ? 0.0f : MOTOR_PID_TARGET_OFFSET);
-        Angle_PID_Structure_Init(&Angle_PID, 0.06f, 0.1f, 0.4f, PWM_MAX, ANGLE_PID_INTEGRAL_MAX);
+        Angle_PID_Structure_Init(&Angle_PID, 10.0f, 0.0f, 0.0f, 10000.0f, ANGLE_PID_INTEGRAL_MAX);
         absolute_encoder_get_location(LEFT_ENCODER_INDEX);
         absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
     }

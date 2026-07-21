@@ -49,7 +49,7 @@ static uint8 Serial_Parse_Signed_Int (const char *str, int16 *result)
 
     while(str[index] >= '0' && str[index] <= '9')
     {
-        value = value * 10 + (str[index] - '0');
+        value = value * 10 + (str[index] - '0');        // 秦九韶算法
         if(value > 32767)
         {
             return 0;

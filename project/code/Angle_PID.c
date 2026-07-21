@@ -1,4 +1,5 @@
 #include "Angle_PID.h"
+#include "Motor_PID.h"
 
 Angle_PID_Struct Angle_PID;
 
@@ -164,7 +165,8 @@ float Angle_PID_Calc (Angle_PID_Struct *pid, float target, float actual)
 }
 
 /*
-函数功能：角度PID控制，算出差速占空比，驱动左右轮反向旋转实现原地转向
+函数功能：角度PID控制。角度环输出作为左右轮的差速速度目标，
+再由两个速度PID分别输出PWM，实现角度外环、速度内环的串级控制。
 参数：
 pid：PID结构体
 target：目标朝向角度（度）
@@ -172,8 +174,8 @@ actual：当前实际朝向角度（度）
 */
 void Angle_PID_Control (Angle_PID_Struct *pid, float target, float actual)
 {
-    float duty = Angle_PID_Calc(pid, target, actual);
+    float speed_target = Angle_PID_Calc(pid, target, actual);
 
-    Set_PWM(duty, LEFT_MOTOR);
-    Set_PWM(-duty, RIGHT_MOTOR);
+    Motor_PID_Control(&Motor_Left_PID, speed_target, motor_encoder_offset[LEFT_MOTOR], LEFT_MOTOR);
+    Motor_PID_Control(&Motor_Right_PID, -speed_target, motor_encoder_offset[RIGHT_MOTOR], RIGHT_MOTOR);
 }

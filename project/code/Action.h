@@ -5,8 +5,8 @@
 #include "Gray_Line.h"
 #include "Position.h"
 
-#define ACTION_TURN_RIGHT_ANGLE         (-90.0f)
-#define ACTION_TURN_LEFT_ANGLE          (90.0f)
+#define ACTION_TURN_RIGHT_ANGLE         (90.0f)
+#define ACTION_TURN_LEFT_ANGLE          (-90.0f)
 #define ACTION_TURN_ANGLE_TOLERANCE     (5.0f)
 #define ACTION_TURN_STABLE_COUNT        (5)
 #define ACTION_TURN_TIMEOUT_MS          (3000)

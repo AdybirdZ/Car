@@ -45,7 +45,14 @@ int main (void)
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    while(true)
+    uint16 straight_count = 0;
+
+    enable_angle_pid = false;
+    enable_gray_line = false;
+    Motor_PID_Target_Init(MOTOR_PID_TARGET_OFFSET);
+    enable_motor_pid = true;
+
+    while(straight_count < ((5000 + MOTOR_PID_PERIOD_MS - 1) / MOTOR_PID_PERIOD_MS))
     {
         // 此处编写需要循环执行的代码
 
@@ -54,10 +61,33 @@ int main (void)
         if(pit_flag)
         {
             pit_flag = 0;
-            /*if(!enable_k230_line)
+            if(!enable_k230_line)
             {
-                Task_Update();
-            }*/
+                //Task_Update();
+
+            }
+            oscilloscope_count ++;
+
+            if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
+            {
+                oscilloscope_count = 0;
+                WIFI_Oscilloscope_Process();
+            }
+            straight_count ++;
+        }
+
+        system_delay_ms(MOTOR_PID_PERIOD_MS);
+
+        // 此处编写需要循环执行的代码
+    }
+
+    Motor_Stop();
+
+    while(true)
+    {
+        if(pit_flag)
+        {
+            pit_flag = 0;
             oscilloscope_count ++;
 
             if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
@@ -68,7 +98,5 @@ int main (void)
         }
 
         system_delay_ms(MOTOR_PID_PERIOD_MS);
-
-        // 此处编写需要循环执行的代码
     }
 }

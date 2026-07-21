@@ -1,4 +1,5 @@
 #include "Action.h"
+#include "WIFI.h"
 
 /*
 函数功能：原地旋转到指定朝向，返回值为0或1（1表示转到位了，0表示超时或没转到位）
@@ -34,7 +35,7 @@ uint8 Action_Turn_To (float target)
     {
         error = Angle_Error(angle_target, angle_actual);
 
-        if(error < ACTION_TURN_ANGLE_TOLERANCE && error > -ACTION_TURN_ANGLE_TOLERANCE)         // 误差在2°以内，持续0.1秒视为稳定
+        if(error < ACTION_TURN_ANGLE_TOLERANCE && error > -ACTION_TURN_ANGLE_TOLERANCE)         // 误差在10°以内，持续0.1秒视为稳定
         {
             stable_count++;
             if(stable_count >= ACTION_TURN_STABLE_COUNT)
@@ -48,6 +49,7 @@ uint8 Action_Turn_To (float target)
         }
 
         system_delay_ms(ANGLE_PID_PERIOD_MS);
+        WIFI_Oscilloscope_Process();
         timeout_count ++;
     }
 
