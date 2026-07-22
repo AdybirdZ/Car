@@ -86,6 +86,7 @@
 #define IMU660RC_CS_PIN                 ( B19 )                                 // CS 片选引脚
 #define IMU660RC_CS(x)                  ( (x) ? (gpio_high(IMU660RC_CS_PIN)) : (gpio_low(IMU660RC_CS_PIN)) )
 #define IMU660RC_INT2_PIN               ( B24 )                                 // 中断信号引脚，在读取四元数时需要使用
+#define IMU660RC_USE_INT2_INTERRUPT     ( 1 )
 
 
 #define IMU660RC_QUARTERNION_GET_GYRO   ( 1 )                                   // 1：在输出四元数的模式时，读取四元数时自动读取角速度 0：不自动读取
@@ -180,7 +181,8 @@ extern float imu660rc_transition_factor[2];
 extern int16 imu660rc_gyro_x,   imu660rc_gyro_y,    imu660rc_gyro_z;    // 三轴陀螺仪数据  
 extern int16 imu660rc_acc_x ,   imu660rc_acc_y ,    imu660rc_acc_z;     // 三轴加速度计数据
 extern float imu660rc_roll  ,   imu660rc_pitch ,    imu660rc_yaw;       // 欧拉角
-extern float imu660rc_quarternion[4];                                   // 四元数
+extern float imu660rc_quarternion[4];
+extern volatile uint8 imu660rc_quarternion_ready;                                   // 四元数
 
 
 void    imu660rc_get_acc            (void);

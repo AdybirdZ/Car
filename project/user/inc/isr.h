@@ -37,5 +37,6 @@
 void pit_handler (uint32 event, void *ptr);
 
 extern volatile uint8 pit_flag;
+extern volatile uint32 pit_tick_count;
 
 #endif

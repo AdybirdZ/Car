@@ -4,6 +4,7 @@
 #include "Angle_PID.h"
 #include "Gray.h"
 #include "WIFI.h"
+#include "isr.h"
 
 #define LEFT_KP_INDEX      (2)
 #define RIGHT_KP_INDEX     (3)
@@ -108,37 +109,22 @@ void WIFI_Init ()
 */
 void WIFI_Oscilloscope_Process ()
 {
-    uint8 channel_num = 0;
-
     if(!enable_WIFI)
     {
         return;
     }
 
-    /*if(enable_motor_output)
-    {
-        seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[LEFT_MOTOR];
-        seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[RIGHT_MOTOR];
-    }*/
-
-    if(enable_position)
-    {
-        //seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[ROLL];
-        //seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[PITCH];
-        seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[YAW];
-    }
-
-    if(enable_gray && channel_num < SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_COUNT)
-    {
-        Gray_Update();
-        seekfree_assistant_oscilloscope_data.data[channel_num++] = gray_value;
-    }
-
-    if(channel_num)
-    {
-        seekfree_assistant_oscilloscope_data.channel_num = channel_num;
-        seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
-    }
+    // 通道0:yaw，1/2:左右编码器速度，3/4:左右PWM，5:PIT心跳，6/7:电机PID和电机输出使能状态。
+    seekfree_assistant_oscilloscope_data.data[0] = euler_angle[YAW];
+    seekfree_assistant_oscilloscope_data.data[1] = motor_encoder_offset[LEFT_MOTOR];
+    seekfree_assistant_oscilloscope_data.data[2] = motor_encoder_offset[RIGHT_MOTOR];
+    seekfree_assistant_oscilloscope_data.data[3] = motor_pwm_duty[LEFT_MOTOR];
+    seekfree_assistant_oscilloscope_data.data[4] = motor_pwm_duty[RIGHT_MOTOR];
+    seekfree_assistant_oscilloscope_data.data[5] = (float)pit_tick_count;
+    seekfree_assistant_oscilloscope_data.data[6] = enable_motor_pid ? 1.0f : 0.0f;
+    seekfree_assistant_oscilloscope_data.data[7] = enable_motor_output ? 1.0f : 0.0f;
+    seekfree_assistant_oscilloscope_data.channel_num = SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_COUNT;
+    seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
 
     seekfree_assistant_data_analysis();
 

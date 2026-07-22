@@ -79,7 +79,8 @@ float imu660rc_transition_factor[2];
 int16 imu660rc_gyro_x = 0,  imu660rc_gyro_y = 0,    imu660rc_gyro_z = 0;    // 三轴陀螺仪数据   gyro (陀螺仪)
 int16 imu660rc_acc_x  = 0,  imu660rc_acc_y  = 0,    imu660rc_acc_z  = 0;    // 三轴加速度计数据 acc  (accelerometer 加速度计)
 float imu660rc_roll   = 0,  imu660rc_pitch  = 0,    imu660rc_yaw    = 0;    // 欧拉角
-float imu660rc_quarternion[4];                                              // 四元数
+float imu660rc_quarternion[4];
+volatile uint8 imu660rc_quarternion_ready = 0;                                              // 四元数
 
 
 
@@ -389,11 +390,14 @@ void imu660rc_get_quarternion(void)
 // 备注信息     
 //             
 //-------------------------------------------------------------------------------------------------------------------
+#if IMU660RC_USE_INT2_INTERRUPT
 void imu660rc_callback(uint32 event, void *ptr)
 {
-    imu660rc_get_quarternion();
-
+    (void)event;
+    (void)ptr;
+    imu660rc_quarternion_ready = 1;
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------------------------
 // 函数简介     初始化 IMU660RC
@@ -546,7 +550,9 @@ uint8 imu660rc_init(imu660rc_quarternion_rate_config quarternion_rate)
             imu660rc_set_mem_bank(IMU660RC_MAIN_MEM_BANK);
 
 			// 开启中断检测引脚
+			#if IMU660RC_USE_INT2_INTERRUPT
 			exti_init(IMU660RC_INT2_PIN, EXTI_TRIGGER_RISING, imu660rc_callback, NULL);
+			#endif
         }
     }while(0);
 	

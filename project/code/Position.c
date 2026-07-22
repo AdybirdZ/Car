@@ -28,6 +28,15 @@ void Position_Init ()
 */
 void Position_Update ()
 {
+#if POSITION_POLLING_ENABLE
+    // Read a quaternion only after IMU INT2 reports that a complete frame is ready.
+    if(imu660rc_quarternion_ready)
+    {
+        imu660rc_quarternion_ready = 0;
+        imu660rc_get_quarternion();
+    }
+#endif
+
     euler_angle[ROLL] = imu660rc_roll;
     euler_angle[PITCH] = imu660rc_pitch;
     euler_angle[YAW] = imu660rc_yaw;

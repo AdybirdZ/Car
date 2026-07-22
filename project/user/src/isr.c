@@ -38,12 +38,14 @@
 #include "Serial.h"
 
 volatile uint8 pit_flag = 0;
+volatile uint32 pit_tick_count = 0;
 
 void pit_handler (uint32 event, void *ptr)
 {
     (void)event;            // 暂时无需判断中断触发源，直接丢弃
 
     *((volatile uint8 *)ptr) = 1;
+    pit_tick_count ++;
 
     if(enable_position)
     {
