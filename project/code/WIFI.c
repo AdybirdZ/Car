@@ -4,6 +4,8 @@
 #include "Angle_PID.h"
 #include "Gray.h"
 #include "WIFI.h"
+#include "Acc_PID.h"
+#include "isr.h"
 
 #define LEFT_KP_INDEX      (2)
 #define RIGHT_KP_INDEX     (3)
@@ -17,7 +19,7 @@
 #define ANGLE_KD_INDEX     (4)
 
 uint8 oscilloscope_count = 0;
-bool enable_WIFI = true;
+bool enable_WIFI = false;
 bool enable_parameter_process = false;      // 是否启用PID调参模式
 
 /*
@@ -103,6 +105,43 @@ void WIFI_Init ()
 }
 
 /*
+函数功能：按PIT节拍执行WiFi通信，发送示波器数据并处理逐飞助手下发的数据
+参数：无
+*/
+void WIFI_Process ()
+{
+    if(!pit_flag)
+    {
+        return;
+    }
+
+    pit_flag = 0;
+    oscilloscope_count ++;
+
+    if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
+    {
+        oscilloscope_count = 0;
+        WIFI_Oscilloscope_Process();
+    }
+}
+
+/*
+函数功能：带WiFi通信处理的延时，延时期间保持逐飞助手数据实时更新
+参数：
+delay_ms：延时时长，单位为毫秒
+*/
+void WIFI_Delay_ms (uint32 delay_ms)
+{
+    uint32 count = 0;
+
+    for(count = 0; count < delay_ms; count++)
+    {
+        system_delay_ms(1);
+        WIFI_Process();
+    }
+}
+
+/*
 函数功能：WiFi示波器发送，把运行数据打包上传到上位机实时显示
 参数：无
 */
@@ -133,6 +172,10 @@ void WIFI_Oscilloscope_Process ()
         Gray_Update();
         seekfree_assistant_oscilloscope_data.data[channel_num++] = gray_value;
     }
+
+    //seekfree_assistant_oscilloscope_data.data[6] = acc_distance_x;
+    //seekfree_assistant_oscilloscope_data.data[7] = acc_distance_y;
+    channel_num = SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_COUNT;
 
     if(channel_num)
     {

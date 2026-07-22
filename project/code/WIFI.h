@@ -15,6 +15,8 @@ extern bool enable_WIFI;
 extern bool enable_parameter_process;
 
 void WIFI_Init ();
+void WIFI_Process ();
+void WIFI_Delay_ms (uint32 delay_ms);
 void WIFI_Oscilloscope_Process ();
 
 #endif

@@ -3,7 +3,7 @@
 
 Angle_PID_Struct Angle_PID;
 
-bool enable_angle_pid = false;
+volatile bool enable_angle_pid = false;
 volatile float angle_target = ANGLE_PID_TARGET_DEFAULT;
 volatile float angle_actual = ANGLE_PID_TARGET_DEFAULT;
 

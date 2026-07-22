@@ -6,7 +6,7 @@
 
 #define GRAY_LINE_WEIGHT_NUM    (GRAY_CHANNEL_NUM)
 
-extern bool enable_gray_line;
+extern volatile bool enable_gray_line;
 extern uint8 gray_line_black_level;
 extern uint8 gray_line_found;
 

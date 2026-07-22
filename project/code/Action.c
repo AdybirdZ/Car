@@ -1,5 +1,8 @@
 #include "Action.h"
 #include "WIFI.h"
+#include "Straight_PID.h"
+
+uint16 straight_count = 0;
 
 /*
 函数功能：原地旋转到指定朝向，返回值为0或1（1表示转到位了，0表示超时或没转到位）
@@ -31,11 +34,11 @@ uint8 Action_Turn_To (float target)
     enable_motor_pid = false;
     enable_angle_pid = true;
 
-    while(timeout_count < (ACTION_TURN_TIMEOUT_MS / ANGLE_PID_PERIOD_MS))                       // 转弯5秒即超时，强行退出
+    while(timeout_count < (ACTION_TURN_TIMEOUT_MS / ANGLE_PID_PERIOD_MS))                       // 转弯3秒即超时，强行退出
     {
         error = Angle_Error(angle_target, angle_actual);
 
-        if(error < ACTION_TURN_ANGLE_TOLERANCE && error > -ACTION_TURN_ANGLE_TOLERANCE)         // 误差在10°以内，持续0.1秒视为稳定
+        if(error < ACTION_TURN_ANGLE_TOLERANCE && error > -ACTION_TURN_ANGLE_TOLERANCE)         // 误差在5°以内，持续0.1秒视为稳定
         {
             stable_count++;
             if(stable_count >= ACTION_TURN_STABLE_COUNT)
@@ -49,7 +52,7 @@ uint8 Action_Turn_To (float target)
         }
 
         system_delay_ms(ANGLE_PID_PERIOD_MS);
-        WIFI_Oscilloscope_Process();
+        //WIFI_Process();
         timeout_count ++;
     }
 
@@ -65,9 +68,9 @@ uint8 Action_Turn_To (float target)
 }
 
 /*
-函数功能：让小车原地转动指定角度（正数：向左转；负数：向右转）
+函数功能：让小车原地转动指定角度
 参数：
-angle：要转多少度
+angle：要转多少度（负数：向左转；正数：向右转）
 */
 uint8 Action_Turn (float angle)
 {
@@ -101,4 +104,35 @@ uint8 Action_Turn_Left ()
 void Turn (float angle)
 {
     (void)Action_Turn(angle);
+}
+
+// 1cm对应time为46
+void Straight_Forward (float time)
+{
+    Straight_PID_Start(angle_target, MOTOR_PID_TARGET_OFFSET);
+
+    while(straight_count < ((time + MOTOR_PID_PERIOD_MS - 1) / MOTOR_PID_PERIOD_MS))
+    {
+        straight_count++;
+        system_delay_ms(MOTOR_PID_PERIOD_MS);
+        //WIFI_Process();
+    }
+
+    straight_count = 0;
+    Motor_Stop();
+}
+
+void Straight_Backward (float time)
+{
+    Straight_PID_Start(angle_target, -MOTOR_PID_TARGET_OFFSET);
+
+    while(straight_count < ((time + MOTOR_PID_PERIOD_MS - 1) / MOTOR_PID_PERIOD_MS))
+    {
+        straight_count++;
+        system_delay_ms(MOTOR_PID_PERIOD_MS);
+        //WIFI_Process();
+    }
+
+    straight_count = 0;
+    Motor_Stop();
 }
