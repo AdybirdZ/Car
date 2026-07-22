@@ -7,14 +7,18 @@
 
 #define ACTION_TURN_RIGHT_ANGLE         (90.0f)
 #define ACTION_TURN_LEFT_ANGLE          (-90.0f)
-#define ACTION_TURN_ANGLE_TOLERANCE     (5.0f)
+#define ACTION_TURN_ANGLE_TOLERANCE     (2.5f)
 #define ACTION_TURN_STABLE_COUNT        (5)
 #define ACTION_TURN_TIMEOUT_MS          (3000)
+
+extern uint16 straight_count;
 
 uint8 Action_Turn (float angle);
 uint8 Action_Turn_To (float target);
 uint8 Action_Turn_Right ();
 uint8 Action_Turn_Left ();
 void Turn (float angle);
+void Straight_Forward (float time);
+void Straight_Backward (float time);
 
 #endif

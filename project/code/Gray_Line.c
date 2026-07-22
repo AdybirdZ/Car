@@ -1,6 +1,6 @@
 #include "Gray_Line.h"
 
-bool enable_gray_line = true;
+volatile bool enable_gray_line = true;
 uint8 gray_line_black_level = 0;
 uint8 gray_line_found = 0;
 

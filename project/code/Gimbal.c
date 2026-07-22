@@ -309,19 +309,24 @@ void Gimbal_Init (void)
     system_delay_ms(1500);
 
     Gimbal_Enable(GIMBAL_SERVO_1);
-    system_delay_ms(2);
+    system_delay_ms(20);
     Gimbal_Enable(GIMBAL_SERVO_2);
-    system_delay_ms(2);
+    system_delay_ms(20);
+
+    // 先发送零速度，防止舵机仍处于速度模式时收到非零速度命令后持续旋转。
+    Gimbal_Set_Speed(GIMBAL_SERVO_1, 0);
+    system_delay_ms(20);
+    Gimbal_Set_Speed(GIMBAL_SERVO_2, 0);
+    system_delay_ms(20);
 
     Gimbal_Set_Mode(GIMBAL_SERVO_1, GIMBAL_MODE_MULTI_POSITION);
-    system_delay_ms(2);
+    system_delay_ms(20);
+    Gimbal_Set_Mode(GIMBAL_SERVO_1, GIMBAL_MODE_MULTI_POSITION);
+    system_delay_ms(20);
     Gimbal_Set_Mode(GIMBAL_SERVO_2, GIMBAL_MODE_MULTI_POSITION);
-    system_delay_ms(2);
-
-    Gimbal_Set_Speed(GIMBAL_SERVO_1, GIMBAL_TEST_SPEED_RPM);
-    system_delay_ms(10);
-    Gimbal_Set_Speed(GIMBAL_SERVO_2, GIMBAL_TEST_SPEED_RPM);
-    system_delay_ms(10);
+    system_delay_ms(20);
+    Gimbal_Set_Mode(GIMBAL_SERVO_2, GIMBAL_MODE_MULTI_POSITION);
+    system_delay_ms(20);
 }
 
 /*

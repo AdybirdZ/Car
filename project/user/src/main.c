@@ -45,58 +45,121 @@ int main (void)
 
     // 此处编写用户代码 例如外设初始化代码等
 
-    uint16 straight_count = 0;
-
     enable_angle_pid = false;
     enable_gray_line = false;
-    Motor_PID_Target_Init(MOTOR_PID_TARGET_OFFSET);
-    enable_motor_pid = true;
+    system_delay_ms(3000);
+    Angle_PID_Target_Init(euler_angle[YAW]);    // 第一次上电时，默认方向角为180°，要初始化一下，把初始方向角也设为180°而非0°
+    Buzz(1);
+    system_delay_ms(1000);
+    Buzz(0);
 
-    while(straight_count < ((5000 + MOTOR_PID_PERIOD_MS - 1) / MOTOR_PID_PERIOD_MS))
-    {
-        // 此处编写需要循环执行的代码
+    Straight_Forward(6050.0f);
 
-        //Serial_Process();
+    system_delay_ms(3000);
 
-        if(pit_flag)
-        {
-            pit_flag = 0;
-            if(!enable_k230_line)
-            {
-                //Task_Update();
+    Straight_Backward(4880.0f);
 
-            }
-            oscilloscope_count ++;
+    system_delay_ms(3000);
 
-            if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
-            {
-                oscilloscope_count = 0;
-                WIFI_Oscilloscope_Process();
-            }
-            straight_count ++;
-        }
+    Action_Turn_Left();
 
-        system_delay_ms(MOTOR_PID_PERIOD_MS);
+    system_delay_ms(1000);
 
-        // 此处编写需要循环执行的代码
-    }
+    Straight_Forward(4800.0f);
 
-    Motor_Stop();
+    system_delay_ms(3000);
+
+    Action_Turn_Right();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(3700.0f);
+
+    system_delay_ms(3000);
+
+    Straight_Backward(3800.0f);     //
+
+    system_delay_ms(3000);
+
+    Action_Turn_Right();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(2270.0f);
+
+    system_delay_ms(3000);
+
+    Action_Turn_Left();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(1250.0f);
+
+    system_delay_ms(3000);
+
+    Action_Turn_Left();
+
+    system_delay_ms(1500);
+
+    Straight_Forward(1200.0f);
+
+    system_delay_ms(3000);
+
+    Straight_Backward(2500.0f);
+
+    system_delay_ms(3000);
+
+    Action_Turn_Right();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(3420.0f);      //
+
+    system_delay_ms(3000);
+
+    Action_Turn_Left();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(1220.0f);
+
+    system_delay_ms(3000);
+
+    Action_Turn_Left();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(2220.0f);
+
+    system_delay_ms(3000);
+
+    Action_Turn_Right();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(1280.0f);
+
+    system_delay_ms(3000);
+
+    Action_Turn_Right();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(2220.0f);
+
+    system_delay_ms(3000);
+
+    Action_Turn_Left();
+
+    system_delay_ms(1000);
+
+    Straight_Forward(1600.0f);
 
     while(true)
     {
-        if(pit_flag)
-        {
-            pit_flag = 0;
-            oscilloscope_count ++;
-
-            if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
-            {
-                oscilloscope_count = 0;
-                WIFI_Oscilloscope_Process();
-            }
-        }
-
-        system_delay_ms(MOTOR_PID_PERIOD_MS);
+        Buzz(1);
+        system_delay_ms(1000);
+        Buzz(0);
+        system_delay_ms(1000);
     }
 }

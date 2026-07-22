@@ -4,7 +4,7 @@
 #include "Motor.h"
 
 #define ANGLE_PID_PERIOD_MS         (20)
-#define ANGLE_PID_INTEGRAL_MAX      (100.0f)
+#define ANGLE_PID_INTEGRAL_MAX      (1000.0f)
 #define ANGLE_PID_TARGET_DEFAULT    (0.0f)
 
 typedef struct
@@ -25,7 +25,7 @@ typedef struct
 } Angle_PID_Struct;
 
 extern Angle_PID_Struct Angle_PID;
-extern bool enable_angle_pid;
+extern volatile bool enable_angle_pid;
 extern volatile float angle_target;
 extern volatile float angle_actual;
 

@@ -1,6 +1,7 @@
 #include "Motor.h"
 #include "Motor_PID.h"
 #include "Angle_PID.h"
+#include "Straight_PID.h"
 #include "Gray_Line.h"
 
 bool enable_motor_output = true;
@@ -93,6 +94,7 @@ void Motor_Stop ()
     // 停止闭环控制并清除目标，随后关闭两个PWM输出
     enable_motor_pid = false;
     enable_angle_pid = false;
+    Straight_PID_Stop();
     enable_gray_line = false;
 
     motor_target_offset[LEFT_MOTOR] = 0;

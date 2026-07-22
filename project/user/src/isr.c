@@ -31,6 +31,8 @@
 
 #include "Motor_PID.h"
 #include "Angle_PID.h"
+#include "Straight_PID.h"
+#include "Acc_PID.h"
 #include "Position.h"
 #include "Gray_Line.h"
 #include "isr.h"
@@ -51,9 +53,10 @@ void pit_handler (uint32 event, void *ptr)
     {
         Position_Update();
         angle_actual = euler_angle[YAW];
+        Acc_PID_Update();
     }
 
-    if(enable_motor_output && (enable_motor_pid || enable_angle_pid))
+    if(enable_motor_output && (enable_motor_pid || enable_angle_pid || enable_straight_pid))
     {
         motor_encoder_location[LEFT_MOTOR] = absolute_encoder_get_location(LEFT_ENCODER_INDEX);
         motor_encoder_location[RIGHT_MOTOR] = absolute_encoder_get_location(RIGHT_ENCODER_INDEX);
@@ -64,6 +67,10 @@ void pit_handler (uint32 event, void *ptr)
         if(enable_angle_pid)
         {
             Angle_PID_Control(&Angle_PID, angle_target, angle_actual);
+        }
+        else if(enable_straight_pid)
+        {
+            Straight_PID_Control(&Straight_PID, straight_angle_target, angle_actual, straight_base_speed);
         }
         else if(enable_motor_pid)
         {

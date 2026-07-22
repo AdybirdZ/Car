@@ -4,6 +4,8 @@
 #include "Angle_PID.h"
 #include "Gray.h"
 #include "WIFI.h"
+#include "Acc_PID.h"
+#include "isr.h"
 #include "isr.h"
 
 #define LEFT_KP_INDEX      (2)
@@ -18,7 +20,7 @@
 #define ANGLE_KD_INDEX     (4)
 
 uint8 oscilloscope_count = 0;
-bool enable_WIFI = true;
+bool enable_WIFI = false;
 bool enable_parameter_process = false;      // 是否启用PID调参模式
 
 /*
@@ -104,6 +106,43 @@ void WIFI_Init ()
 }
 
 /*
+函数功能：按PIT节拍执行WiFi通信，发送示波器数据并处理逐飞助手下发的数据
+参数：无
+*/
+void WIFI_Process ()
+{
+    if(!pit_flag)
+    {
+        return;
+    }
+
+    pit_flag = 0;
+    oscilloscope_count ++;
+
+    if(OSCILLOSCOPE_FREQ <= oscilloscope_count)
+    {
+        oscilloscope_count = 0;
+        WIFI_Oscilloscope_Process();
+    }
+}
+
+/*
+函数功能：带WiFi通信处理的延时，延时期间保持逐飞助手数据实时更新
+参数：
+delay_ms：延时时长，单位为毫秒
+*/
+void WIFI_Delay_ms (uint32 delay_ms)
+{
+    uint32 count = 0;
+
+    for(count = 0; count < delay_ms; count++)
+    {
+        system_delay_ms(1);
+        WIFI_Process();
+    }
+}
+
+/*
 函数功能：WiFi示波器发送，把运行数据打包上传到上位机实时显示
 参数：无
 */
@@ -114,17 +153,34 @@ void WIFI_Oscilloscope_Process ()
         return;
     }
 
-    // 通道0:yaw，1/2:左右编码器速度，3/4:左右PWM，5:PIT心跳，6/7:电机PID和电机输出使能状态。
-    seekfree_assistant_oscilloscope_data.data[0] = euler_angle[YAW];
-    seekfree_assistant_oscilloscope_data.data[1] = motor_encoder_offset[LEFT_MOTOR];
-    seekfree_assistant_oscilloscope_data.data[2] = motor_encoder_offset[RIGHT_MOTOR];
-    seekfree_assistant_oscilloscope_data.data[3] = motor_pwm_duty[LEFT_MOTOR];
-    seekfree_assistant_oscilloscope_data.data[4] = motor_pwm_duty[RIGHT_MOTOR];
-    seekfree_assistant_oscilloscope_data.data[5] = (float)pit_tick_count;
-    seekfree_assistant_oscilloscope_data.data[6] = enable_motor_pid ? 1.0f : 0.0f;
-    seekfree_assistant_oscilloscope_data.data[7] = enable_motor_output ? 1.0f : 0.0f;
-    seekfree_assistant_oscilloscope_data.channel_num = SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_COUNT;
-    seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
+    /*if(enable_motor_output)
+    {
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[LEFT_MOTOR];
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = motor_encoder_offset[RIGHT_MOTOR];
+    }*/
+
+    if(enable_position)
+    {
+        //seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[ROLL];
+        //seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[PITCH];
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = euler_angle[YAW];
+    }
+
+    if(enable_gray && channel_num < SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_COUNT)
+    {
+        Gray_Update();
+        seekfree_assistant_oscilloscope_data.data[channel_num++] = gray_value;
+    }
+
+    //seekfree_assistant_oscilloscope_data.data[6] = acc_distance_x;
+    //seekfree_assistant_oscilloscope_data.data[7] = acc_distance_y;
+    channel_num = SEEKFREE_ASSISTANT_SET_OSCILLOSCOPE_COUNT;
+
+    if(channel_num)
+    {
+        seekfree_assistant_oscilloscope_data.channel_num = channel_num;
+        seekfree_assistant_oscilloscope_send(&seekfree_assistant_oscilloscope_data);
+    }
 
     seekfree_assistant_data_analysis();
 
