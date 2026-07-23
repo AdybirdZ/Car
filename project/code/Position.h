@@ -10,6 +10,7 @@
 
 extern float euler_angle[3];
 extern bool enable_position;
+extern bool position_init_ok;
 
 void Position_Init ();
 void Position_Update ();

@@ -93,9 +93,9 @@ void Euler_Set_Yaw (Euler_Struct *euler, float yaw)
 函数功能：只用重力加速度重新建立roll和pitch，并指定yaw初值。
 前提：传感器应保持静止，否则线加速度会被错误解释为倾角。
 */
-void Euler_Reset_From_Accel (Euler_Struct *euler, const MPU6050_Data_Struct *sensor, float yaw)
+void Euler_Reset_From_Acc (Euler_Struct *euler, const MPU6050_Data_Struct *sensor, float yaw)
 {
-    float accel_yz;
+    float acc_yz;
 
     if(NULL == euler || NULL == sensor)
     {
@@ -103,12 +103,12 @@ void Euler_Reset_From_Accel (Euler_Struct *euler, const MPU6050_Data_Struct *sen
     }
 
     // roll是Y、Z轴重力分量形成的夹角，atan2可保留完整象限信息。
-    euler->roll = atan2f(sensor->accel_g[1], sensor->accel_g[2]) * EULER_RAD_TO_DEG;
+    euler->roll = atan2f(sensor->acc_g[1], sensor->acc_g[2]) * EULER_RAD_TO_DEG;
 
     // pitch使用X轴与YZ合成分量计算；根号项始终非负，可避免象限歧义。
-    accel_yz = sqrtf(sensor->accel_g[1] * sensor->accel_g[1]
-                   + sensor->accel_g[2] * sensor->accel_g[2]);
-    euler->pitch = atan2f(-sensor->accel_g[0], accel_yz) * EULER_RAD_TO_DEG;
+    acc_yz = sqrtf(sensor->acc_g[1] * sensor->acc_g[1]
+                   + sensor->acc_g[2] * sensor->acc_g[2]);
+    euler->pitch = atan2f(-sensor->acc_g[0], acc_yz) * EULER_RAD_TO_DEG;
 
     // 六轴MPU6050无法由重力确定航向，因此yaw只能使用调用者给出的基准。
     euler->yaw = Euler_Normalize_360(yaw);
@@ -122,10 +122,10 @@ void Euler_Reset_From_Accel (Euler_Struct *euler, const MPU6050_Data_Struct *sen
 */
 uint8 Euler_Update (Euler_Struct *euler, const MPU6050_Data_Struct *sensor, float dt_s)
 {
-    float accel_norm;
-    float accel_roll;
-    float accel_pitch;
-    float accel_yz;
+    float acc_norm;
+    float acc_roll;
+    float acc_pitch;
+    float acc_yz;
     float gyro_roll;
     float gyro_pitch;
     float roll_error;
@@ -145,7 +145,7 @@ uint8 Euler_Update (Euler_Struct *euler, const MPU6050_Data_Struct *sensor, floa
     // 第一次更新先用重力方向确定roll/pitch，避免从0度慢慢收敛。
     if(!euler->initialized)
     {
-        Euler_Reset_From_Accel(euler, sensor, 0.0f);
+        Euler_Reset_From_Acc(euler, sensor, 0.0f);
     }
 
     // 对三个角速度分别积分；MPU6050_Update已经减去了静止零偏。
@@ -154,21 +154,21 @@ uint8 Euler_Update (Euler_Struct *euler, const MPU6050_Data_Struct *sensor, floa
     euler->yaw = Euler_Normalize_360(euler->yaw + sensor->gyro_dps[2] * dt_s);
 
     // 计算加速度矢量模长，用来判断当前数据是否主要由重力构成。
-    accel_norm = sqrtf(sensor->accel_g[0] * sensor->accel_g[0]
-                     + sensor->accel_g[1] * sensor->accel_g[1]
-                     + sensor->accel_g[2] * sensor->accel_g[2]);
+    acc_norm = sqrtf(sensor->acc_g[0] * sensor->acc_g[0]
+                     + sensor->acc_g[1] * sensor->acc_g[1]
+                     + sensor->acc_g[2] * sensor->acc_g[2]);
 
-    if(accel_norm >= EULER_ACCEL_NORM_MIN_G && accel_norm <= EULER_ACCEL_NORM_MAX_G)
+    if(acc_norm >= EULER_ACC_NORM_MIN_G && acc_norm <= EULER_ACC_NORM_MAX_G)
     {
         // 车辆线加速度较小时，利用重力方向计算无长期漂移的roll/pitch参考角。
-        accel_roll = atan2f(sensor->accel_g[1], sensor->accel_g[2]) * EULER_RAD_TO_DEG;
-        accel_yz = sqrtf(sensor->accel_g[1] * sensor->accel_g[1]
-                       + sensor->accel_g[2] * sensor->accel_g[2]);
-        accel_pitch = atan2f(-sensor->accel_g[0], accel_yz) * EULER_RAD_TO_DEG;
+        acc_roll = atan2f(sensor->acc_g[1], sensor->acc_g[2]) * EULER_RAD_TO_DEG;
+        acc_yz = sqrtf(sensor->acc_g[1] * sensor->acc_g[1]
+                       + sensor->acc_g[2] * sensor->acc_g[2]);
+        acc_pitch = atan2f(-sensor->acc_g[0], acc_yz) * EULER_RAD_TO_DEG;
 
         // 先计算最短角度误差，再叠加少量加速度修正，避免跨越±180度时错误平均。
-        roll_error = Euler_Normalize_180(accel_roll - gyro_roll);
-        pitch_error = Euler_Normalize_180(accel_pitch - gyro_pitch);
+        roll_error = Euler_Normalize_180(acc_roll - gyro_roll);
+        pitch_error = Euler_Normalize_180(acc_pitch - gyro_pitch);
         euler->roll = Euler_Normalize_180(gyro_roll + (1.0f - euler->complementary_alpha) * roll_error);
         euler->pitch = Euler_Normalize_180(gyro_pitch + (1.0f - euler->complementary_alpha) * pitch_error);
     }

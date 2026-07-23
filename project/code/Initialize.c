@@ -52,7 +52,6 @@ void Init ()
     {
         Serial_Init();
         system_delay_ms(K230_START_DELAY_MS);
-        Serial_Send_Byte(K230_START_COMMAND);
         system_delay_ms(INIT_MODULE_DELAY_MS);
     }
 
@@ -115,21 +114,22 @@ void Init ()
         system_delay_ms(INIT_MODULE_DELAY_MS);
     }
 
-    Init_Module_Start(INIT_MODULE_GIMBAL, "GIMBAL");
-    Gimbal_Init();
-    Init_Module_Done(INIT_MODULE_GIMBAL, "GIMBAL");
-    system_delay_ms(INIT_MODULE_DELAY_MS);
+    if(enable_gimbal)
+    {
+        Init_Module_Start(INIT_MODULE_GIMBAL, "GIMBAL");
+        Gimbal_Init();
+        Init_Module_Done(INIT_MODULE_GIMBAL, "GIMBAL");
+        system_delay_ms(INIT_MODULE_DELAY_MS);
 
-    Init_Module_Start(INIT_MODULE_GIMBAL_POS, "GIMBAL_POSITION");
-    Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);        // 经测试，有时舵机启动错误，所以多启动几次
-    system_delay_ms(30);
-    Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);
-    system_delay_ms(30);
-    Gimbal_Set_Multi_Position(GIMBAL_SERVO_2, GIMBAL_SERVO_2_VERTICAL_ANGLE_X10);
-    system_delay_ms(30);
-    Gimbal_Set_Multi_Position(GIMBAL_SERVO_2, GIMBAL_SERVO_2_VERTICAL_ANGLE_X10);
-    Init_Module_Done(INIT_MODULE_GIMBAL_POS, "GIMBAL_POSITION");
-    system_delay_ms(INIT_MODULE_DELAY_MS);
+        Init_Module_Start(INIT_MODULE_GIMBAL_POS, "GIMBAL_POSITION");
+        Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);        // 经测试，有时舵机启动错误，所以多启动几次
+        system_delay_ms(30);
+        Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);
+        system_delay_ms(30);
+        Gimbal_Set_Servo_2_Startup_Position();
+        Init_Module_Done(INIT_MODULE_GIMBAL_POS, "GIMBAL_POSITION");
+        system_delay_ms(INIT_MODULE_DELAY_MS);
+    }
 
     pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, pit_handler, (void *)&pit_flag);
     interrupt_global_enable(0);

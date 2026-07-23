@@ -43,123 +43,32 @@ int main (void)
 {
     Init();
 
-    // 此处编写用户代码 例如外设初始化代码等
+    Gimbal_Test_Process();
 
-    enable_angle_pid = false;
-    enable_gray_line = false;
-    system_delay_ms(3000);
-    Angle_PID_Target_Init(euler_angle[YAW]);    // 第一次上电时，默认方向角为180°，要初始化一下，把初始方向角也设为180°而非0°
+    system_delay_ms(1000);
     Buzz(1);
     system_delay_ms(1000);
     Buzz(0);
+    Serial_Send_Byte(K230_START_COMMAND);
 
-    Straight_Forward(6050.0f);
-
-    system_delay_ms(3000);
-
-    Straight_Backward(4880.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Left();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(4800.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Right();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(3700.0f);
-
-    system_delay_ms(3000);
-
-    Straight_Backward(3800.0f);     //
-
-    system_delay_ms(3000);
-
-    Action_Turn_Right();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(2270.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Left();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(1250.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Left();
-
-    system_delay_ms(1500);
-
-    Straight_Forward(1200.0f);
-
-    system_delay_ms(3000);
-
-    Straight_Backward(2500.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Right();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(3420.0f);      //
-
-    system_delay_ms(3000);
-
-    Action_Turn_Left();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(1220.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Left();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(2220.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Right();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(1280.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Right();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(2220.0f);
-
-    system_delay_ms(3000);
-
-    Action_Turn_Left();
-
-    system_delay_ms(1000);
-
-    Straight_Forward(1600.0f);
+    /*
+    K230巡线使用左右轮独立速度环。上电后目标速度保持为0，
+    只有Serial_Process()收到一帧有效的K230数据后才会写入目标速度，
+    因此不会因为K230尚未输出数据而直接起步。
+    */
+    if(enable_k230_line)
+    {
+        Motor_PID_Target_Init(0.0f);
+        Motor_PID_Clear(&Motor_Left_PID);
+        Motor_PID_Clear(&Motor_Right_PID);
+        enable_motor_pid = true;
+    }
 
     while(true)
     {
-        Buzz(1);
-        system_delay_ms(1000);
-        Buzz(0);
-        system_delay_ms(1000);
+        Serial_Process();
+
+        // 目前K230超时计数以此1ms周期为基准。
+        system_delay_ms(1);
     }
 }
