@@ -6,7 +6,6 @@
 #include "WIFI.h"
 #include "Acc_PID.h"
 #include "isr.h"
-#include "isr.h"
 
 #define LEFT_KP_INDEX      (2)
 #define RIGHT_KP_INDEX     (3)
@@ -20,6 +19,7 @@
 #define ANGLE_KD_INDEX     (4)
 
 uint8 oscilloscope_count = 0;
+uint8 channel_num = 0;
 bool enable_WIFI = false;
 bool enable_parameter_process = false;      // 是否启用PID调参模式
 
