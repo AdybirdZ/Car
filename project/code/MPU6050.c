@@ -7,7 +7,7 @@
 static soft_iic_info_struct mpu6050_iic;
 
 // 保存当前量程，换算原始数据时必须使用与寄存器一致的灵敏度。
-static MPU6050_Accel_Range_Enum mpu6050_accel_range = MPU6050_ACCEL_RANGE_4G;
+static MPU6050_Acc_Range_Enum mpu6050_acc_range = MPU6050_ACC_RANGE_4G;
 static MPU6050_Gyro_Range_Enum mpu6050_gyro_range = MPU6050_GYRO_RANGE_500DPS;
 
 // 对外提供最近一次完整采样以及静止校准得到的陀螺仪零偏。
@@ -213,22 +213,22 @@ uint8 MPU6050_Set_Sample_Rate (uint16 sample_rate_hz)
 /*
 函数功能：设置加速度计满量程，并同步更新物理量换算系数。
 */
-uint8 MPU6050_Set_Accel_Range (MPU6050_Accel_Range_Enum range)
+uint8 MPU6050_Set_Acc_Range (MPU6050_Acc_Range_Enum range)
 {
-    if(range != MPU6050_ACCEL_RANGE_2G && range != MPU6050_ACCEL_RANGE_4G
-    && range != MPU6050_ACCEL_RANGE_8G && range != MPU6050_ACCEL_RANGE_16G)
+    if(range != MPU6050_ACC_RANGE_2G && range != MPU6050_ACC_RANGE_4G
+    && range != MPU6050_ACC_RANGE_8G && range != MPU6050_ACC_RANGE_16G)
     {
         return MPU6050_ERROR_PARAMETER;
     }
 
-    MPU6050_Write_Reg(MPU6050_REG_ACCEL_CONFIG, (uint8)range);
-    if(MPU6050_OK != MPU6050_Verify_Reg(MPU6050_REG_ACCEL_CONFIG, 0x18, (uint8)range, 3))
+    MPU6050_Write_Reg(MPU6050_REG_ACC_CONFIG, (uint8)range);
+    if(MPU6050_OK != MPU6050_Verify_Reg(MPU6050_REG_ACC_CONFIG, 0x18, (uint8)range, 3))
     {
         return MPU6050_ERROR_CONFIG;
     }
 
     // 只有回读成功后才更新软件量程，避免换算系数与硬件不一致。
-    mpu6050_accel_range = range;
+    mpu6050_acc_range = range;
     return MPU6050_OK;
 }
 
@@ -282,7 +282,7 @@ uint8 MPU6050_Enable_DataReady_INT (uint8 enable)
 /*
 函数功能：连续读取三轴加速度原始值。
 */
-void MPU6050_Read_Raw_Accel (MPU6050_Raw_Data_Struct *raw)
+void MPU6050_Read_Raw_Acc (MPU6050_Raw_Data_Struct *raw)
 {
     uint8 buffer[6];
 
@@ -291,10 +291,10 @@ void MPU6050_Read_Raw_Accel (MPU6050_Raw_Data_Struct *raw)
         return;
     }
 
-    MPU6050_Read_Regs(MPU6050_REG_ACCEL_XOUT_H, buffer, 6);
-    raw->accel_x = (int16)(((uint16)buffer[0] << 8) | buffer[1]);
-    raw->accel_y = (int16)(((uint16)buffer[2] << 8) | buffer[3]);
-    raw->accel_z = (int16)(((uint16)buffer[4] << 8) | buffer[5]);
+    MPU6050_Read_Regs(MPU6050_REG_ACC_XOUT_H, buffer, 6);
+    raw->acc_x = (int16)(((uint16)buffer[0] << 8) | buffer[1]);
+    raw->acc_y = (int16)(((uint16)buffer[2] << 8) | buffer[3]);
+    raw->acc_z = (int16)(((uint16)buffer[4] << 8) | buffer[5]);
 }
 
 /*
@@ -325,7 +325,7 @@ int16 MPU6050_Read_Raw_Temp (void)
 }
 
 /*
-函数功能：从ACCEL_XOUT_H开始一次读取14字节，获得同一数据块内的加速度、温度和角速度。
+函数功能：从ACC_XOUT_H开始一次读取14字节，获得同一数据块内的加速度、温度和角速度。
 */
 void MPU6050_Read_All (MPU6050_Raw_Data_Struct *raw)
 {
@@ -337,12 +337,12 @@ void MPU6050_Read_All (MPU6050_Raw_Data_Struct *raw)
     }
 
     // 单次突发读取比三次分开读取更快，也能减少轴数据跨采样周期的概率。
-    MPU6050_Read_Regs(MPU6050_REG_ACCEL_XOUT_H, buffer, 14);
+    MPU6050_Read_Regs(MPU6050_REG_ACC_XOUT_H, buffer, 14);
 
     // MPU6050所有传感器寄存器均按高字节在前、低字节在后排列。
-    raw->accel_x    = (int16)(((uint16)buffer[0]  << 8) | buffer[1]);
-    raw->accel_y    = (int16)(((uint16)buffer[2]  << 8) | buffer[3]);
-    raw->accel_z    = (int16)(((uint16)buffer[4]  << 8) | buffer[5]);
+    raw->acc_x    = (int16)(((uint16)buffer[0]  << 8) | buffer[1]);
+    raw->acc_y    = (int16)(((uint16)buffer[2]  << 8) | buffer[3]);
+    raw->acc_z    = (int16)(((uint16)buffer[4]  << 8) | buffer[5]);
     raw->temperature = (int16)(((uint16)buffer[6]  << 8) | buffer[7]);
     raw->gyro_x     = (int16)(((uint16)buffer[8]  << 8) | buffer[9]);
     raw->gyro_y     = (int16)(((uint16)buffer[10] << 8) | buffer[11]);
@@ -350,16 +350,16 @@ void MPU6050_Read_All (MPU6050_Raw_Data_Struct *raw)
 }
 
 /* 函数功能：按照当前加速度量程把原始值转换为g。 */
-float MPU6050_Accel_To_G (int16 raw_value)
+float MPU6050_Acc_To_G (int16 raw_value)
 {
     float sensitivity = 8192.0f;
 
-    switch(mpu6050_accel_range)
+    switch(mpu6050_acc_range)
     {
-        case MPU6050_ACCEL_RANGE_2G:  sensitivity = 16384.0f; break;
-        case MPU6050_ACCEL_RANGE_4G:  sensitivity = 8192.0f;  break;
-        case MPU6050_ACCEL_RANGE_8G:  sensitivity = 4096.0f;  break;
-        case MPU6050_ACCEL_RANGE_16G: sensitivity = 2048.0f;  break;
+        case MPU6050_ACC_RANGE_2G:  sensitivity = 16384.0f; break;
+        case MPU6050_ACC_RANGE_4G:  sensitivity = 8192.0f;  break;
+        case MPU6050_ACC_RANGE_8G:  sensitivity = 4096.0f;  break;
+        case MPU6050_ACC_RANGE_16G: sensitivity = 2048.0f;  break;
         default: break;
     }
 
@@ -396,9 +396,9 @@ void MPU6050_Update (void)
 {
     MPU6050_Read_All(&mpu6050_data.raw);
 
-    mpu6050_data.accel_g[0] = MPU6050_Accel_To_G(mpu6050_data.raw.accel_x);
-    mpu6050_data.accel_g[1] = MPU6050_Accel_To_G(mpu6050_data.raw.accel_y);
-    mpu6050_data.accel_g[2] = MPU6050_Accel_To_G(mpu6050_data.raw.accel_z);
+    mpu6050_data.acc_g[0] = MPU6050_Acc_To_G(mpu6050_data.raw.acc_x);
+    mpu6050_data.acc_g[1] = MPU6050_Acc_To_G(mpu6050_data.raw.acc_y);
+    mpu6050_data.acc_g[2] = MPU6050_Acc_To_G(mpu6050_data.raw.acc_z);
 
     // 从角速度中减去零偏，使静止时三个轴尽可能接近0度每秒。
     mpu6050_data.gyro_dps[0] = MPU6050_Gyro_To_DPS(mpu6050_data.raw.gyro_x) - mpu6050_gyro_bias_dps[0];
@@ -493,7 +493,7 @@ uint8 MPU6050_Init (void)
     {
         return MPU6050_ERROR_CONFIG;
     }
-    if(MPU6050_OK != MPU6050_Set_Accel_Range(MPU6050_ACCEL_RANGE_4G))
+    if(MPU6050_OK != MPU6050_Set_Acc_Range(MPU6050_ACC_RANGE_4G))
     {
         return MPU6050_ERROR_CONFIG;
     }

@@ -13,10 +13,10 @@
 #define MPU6050_REG_SMPLRT_DIV          (0x19)
 #define MPU6050_REG_CONFIG              (0x1A)
 #define MPU6050_REG_GYRO_CONFIG         (0x1B)
-#define MPU6050_REG_ACCEL_CONFIG        (0x1C)
+#define MPU6050_REG_ACC_CONFIG        (0x1C)
 #define MPU6050_REG_INT_PIN_CFG         (0x37)
 #define MPU6050_REG_INT_ENABLE          (0x38)
-#define MPU6050_REG_ACCEL_XOUT_H        (0x3B)
+#define MPU6050_REG_ACC_XOUT_H        (0x3B)
 #define MPU6050_REG_TEMP_OUT_H          (0x41)
 #define MPU6050_REG_GYRO_XOUT_H         (0x43)
 #define MPU6050_REG_USER_CTRL           (0x6A)
@@ -33,14 +33,14 @@ typedef enum
     MPU6050_ERROR_PARAMETER
 } MPU6050_Status_Enum;
 
-// 枚举值直接对应 ACCEL_CONFIG 寄存器的 AFS_SEL[1:0] 位。
+// 枚举值直接对应 ACC_CONFIG 寄存器的 AFS_SEL[1:0] 位。
 typedef enum
 {
-    MPU6050_ACCEL_RANGE_2G  = 0x00,
-    MPU6050_ACCEL_RANGE_4G  = 0x08,
-    MPU6050_ACCEL_RANGE_8G  = 0x10,
-    MPU6050_ACCEL_RANGE_16G = 0x18
-} MPU6050_Accel_Range_Enum;
+    MPU6050_ACC_RANGE_2G  = 0x00,
+    MPU6050_ACC_RANGE_4G  = 0x08,
+    MPU6050_ACC_RANGE_8G  = 0x10,
+    MPU6050_ACC_RANGE_16G = 0x18
+} MPU6050_Acc_Range_Enum;
 
 // 枚举值直接对应 GYRO_CONFIG 寄存器的 FS_SEL[1:0] 位。
 typedef enum
@@ -53,9 +53,9 @@ typedef enum
 
 typedef struct
 {
-    int16 accel_x;
-    int16 accel_y;
-    int16 accel_z;
+    int16 acc_x;
+    int16 acc_y;
+    int16 acc_z;
     int16 temperature;
     int16 gyro_x;
     int16 gyro_y;
@@ -65,7 +65,7 @@ typedef struct
 typedef struct
 {
     MPU6050_Raw_Data_Struct raw;
-    float accel_g[3];
+    float acc_g[3];
     float gyro_dps[3];
     float temperature_c;
 } MPU6050_Data_Struct;
@@ -84,16 +84,16 @@ uint8 MPU6050_Verify_Reg (uint8 reg, uint8 mask, uint8 expected, uint8 retry_cou
 uint8 MPU6050_Reset (void);
 uint8 MPU6050_Set_Clock_Source (uint8 clock_source);
 uint8 MPU6050_Set_Sample_Rate (uint16 sample_rate_hz);
-uint8 MPU6050_Set_Accel_Range (MPU6050_Accel_Range_Enum range);
+uint8 MPU6050_Set_Acc_Range (MPU6050_Acc_Range_Enum range);
 uint8 MPU6050_Set_Gyro_Range (MPU6050_Gyro_Range_Enum range);
 uint8 MPU6050_Set_DLPF (uint8 dlpf_cfg);
 uint8 MPU6050_Enable_DataReady_INT (uint8 enable);
 
-void MPU6050_Read_Raw_Accel (MPU6050_Raw_Data_Struct *raw);
+void MPU6050_Read_Raw_Acc (MPU6050_Raw_Data_Struct *raw);
 void MPU6050_Read_Raw_Gyro (MPU6050_Raw_Data_Struct *raw);
 int16 MPU6050_Read_Raw_Temp (void);
 void MPU6050_Read_All (MPU6050_Raw_Data_Struct *raw);
-float MPU6050_Accel_To_G (int16 raw_value);
+float MPU6050_Acc_To_G (int16 raw_value);
 float MPU6050_Gyro_To_DPS (int16 raw_value);
 float MPU6050_Temp_To_Celsius (int16 raw_value);
 void MPU6050_Update (void);
