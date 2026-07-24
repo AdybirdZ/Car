@@ -56,6 +56,11 @@ static void K230_Line_Stop (void)
     enable_k230_line = false;
 }
 
+static void K230_Line_Disable (void)
+{
+    enable_k230_line = false;
+}
+
 static void Wait_K230_Road_Flag (volatile uint8 *flag)
 {
     while(!(*flag))
@@ -73,7 +78,7 @@ int main (void)
 
     K230_Line_Start();
     Wait_K230_Road_Flag(&stop_flag);
-    K230_Line_Stop();
+    K230_Line_Disable();
 
     Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 1000);
     Buzz(1);
