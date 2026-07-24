@@ -30,9 +30,6 @@ typedef struct
 }Gimbal_Test_Step_Struct;
 
 Gimbal_Feedback_Struct gimbal_feedback[2] = {0};
-volatile int32 gimbal_servo_2_startup_angle_x10 = 0;
-volatile int32 gimbal_servo_2_startup_target_x10 = 0;
-volatile uint8 gimbal_servo_2_startup_ready = 0;
 
 static uint8 gimbal_rx_buffer[GIMBAL_RX_FRAME_SIZE] = {0};
 static uint8 gimbal_rx_index = 0;
@@ -195,12 +192,6 @@ static void Gimbal_Parse_Byte (uint8 data)              // 将接收到的字节
 }
 
 /*
-函数功能：舵机UART接收中断回调，从硬件FIFO读出所有待处理字节，送入解析器
-参数：
-state：中断状态（TX/RX），只处理RX接收事件
-ptr：回调用户指针（本模块未使用，传NULL）
-*/
-/*
 函数功能：读取UART1接收FIFO中的全部字节并送入云台反馈解析器
 说明：既可被UART中断回调调用，也可在初始化阶段主动轮询调用
 */
@@ -315,56 +306,37 @@ void Gimbal_Request_Feedback (uint8 servo, uint8 feedback_type)
 }
 
 /*
-函数功能：读取2号舵机刚上电时的多圈角度，并移动到上电时角度+30°的位置
+函数功能：将1号舵机移动到预设的启动多圈位置
 参数：无
-返回值：1表示成功读取角度并下发目标，0表示多次请求后仍未收到有效反馈
+返回值：固定返回1，表示启动位置命令已下发
 */
+uint8 Gimbal_Set_Servo_1_Startup_Position (void)
+{
+    Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);
+    return 1;
+}
+
+
 uint8 Gimbal_Set_Servo_2_Startup_Position (void)
 {
     uint8 retry_count = 0;
-    uint8 wait_count = 0;
-
-    gimbal_servo_2_startup_ready = 0;
+    int32 target_angle_x10 = 0;
 
     for(retry_count = 0; retry_count < GIMBAL_STARTUP_FEEDBACK_RETRY; retry_count ++)
     {
-        /* 每次请求前清除旧标志，确保使用的是本次返回的多圈角度。 */
         gimbal_feedback[1].data_ready = 0;
         Gimbal_Request_Feedback(GIMBAL_SERVO_2, GIMBAL_FEEDBACK_MULTI_ANGLE);
-
-        /*
-         * 初始化过程可能早于全局中断使能，因此这里主动轮询UART1。
-         * 即使UART1中断尚未响应，也能把反馈帧解析到 data_ready。
-         */
-        for(wait_count = 0; wait_count < (GIMBAL_STARTUP_FEEDBACK_WAIT_MS / 5); wait_count ++)
-        {
-            Gimbal_Process_Rx_FIFO();
-            if(gimbal_feedback[1].data_ready)
-            {
-                break;
-            }
-            system_delay_ms(5);
-        }
-
+        system_delay_ms(GIMBAL_STARTUP_FEEDBACK_WAIT_MS);
         Gimbal_Process_Rx_FIFO();
 
         if(gimbal_feedback[1].data_ready)
         {
-            gimbal_servo_2_startup_angle_x10 = gimbal_feedback[1].multi_angle_x10;
-            gimbal_servo_2_startup_target_x10 = gimbal_servo_2_startup_angle_x10 + GIMBAL_SERVO_2_STARTUP_OFFSET_X10;
-
-            /* 重复下发一次，降低舵机上电阶段偶发漏收命令的概率。 */
-            Gimbal_Set_Multi_Position(GIMBAL_SERVO_2, gimbal_servo_2_startup_target_x10);
-            system_delay_ms(30);
-            Gimbal_Set_Multi_Position(GIMBAL_SERVO_2, gimbal_servo_2_startup_target_x10);
-
-            gimbal_servo_2_startup_ready = 1;
-            printf("[GIMBAL] SERVO2 START=%ld TARGET=%ld\r\n", (long)gimbal_servo_2_startup_angle_x10, (long)gimbal_servo_2_startup_target_x10);
+            target_angle_x10 = gimbal_feedback[1].multi_angle_x10 + GIMBAL_SERVO_2_STARTUP_OFFSET_X10;
+            Gimbal_Set_Multi_Position(GIMBAL_SERVO_2, target_angle_x10);
             return 1;
         }
     }
 
-    printf("[GIMBAL] SERVO2 ANGLE FEEDBACK FAILED\r\n");
     return 0;
 }
 
@@ -382,24 +354,19 @@ void Gimbal_Init (void)
     system_delay_ms(1500);
 
     Gimbal_Enable(GIMBAL_SERVO_1);
-    system_delay_ms(20);
+    system_delay_ms(2);
     Gimbal_Enable(GIMBAL_SERVO_2);
-    system_delay_ms(20);
+    system_delay_ms(2);
 
-    // 先发送零速度，防止舵机仍处于速度模式时收到非零速度命令后持续旋转。
-    Gimbal_Set_Speed(GIMBAL_SERVO_1, 0);
-    system_delay_ms(20);
-    Gimbal_Set_Speed(GIMBAL_SERVO_2, 0);
-    system_delay_ms(20);
-
-    Gimbal_Set_Mode(GIMBAL_SERVO_1, GIMBAL_MODE_MULTI_POSITION);        // 确保舵机模式设定成功，每个舵机设置两次
-    system_delay_ms(20);
     Gimbal_Set_Mode(GIMBAL_SERVO_1, GIMBAL_MODE_MULTI_POSITION);
-    system_delay_ms(20);
+    system_delay_ms(2);
     Gimbal_Set_Mode(GIMBAL_SERVO_2, GIMBAL_MODE_MULTI_POSITION);
-    system_delay_ms(20);
-    Gimbal_Set_Mode(GIMBAL_SERVO_2, GIMBAL_MODE_MULTI_POSITION);
-    system_delay_ms(20);
+    system_delay_ms(2);
+
+    Gimbal_Set_Speed(GIMBAL_SERVO_1, GIMBAL_TEST_SPEED_RPM);
+    system_delay_ms(10);
+    Gimbal_Set_Speed(GIMBAL_SERVO_2, GIMBAL_TEST_SPEED_RPM);
+    system_delay_ms(10);
 }
 
 /*

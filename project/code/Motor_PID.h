@@ -5,7 +5,7 @@
 #include "Motor.h"
 
 #define MOTOR_PID_PERIOD_MS        (20)
-#define MOTOR_PID_TARGET_OFFSET    (250.0f)
+#define MOTOR_PID_TARGET_OFFSET    (150.0f)
 #define MOTOR_PID_INTEGRAL_MAX     (1000.0f)
 
 typedef struct
@@ -36,6 +36,7 @@ void Motor_PID_Structure_Init (Motor_PID_Struct *pid, float kp, float ki, float 
 void Motor_PID_Target_Init (float target);
 void Motor_PID_Set (Motor_PID_Struct *pid, float kp, float ki, float kd);
 void Motor_PID_Clear (Motor_PID_Struct *pid);
+void Motor_PID_Test_Start (float target);
 float Motor_PID_Calc (Motor_PID_Struct *pid, float target, float actual);
 float Motor_PID_Control (Motor_PID_Struct *pid, float target, float actual, int8 motor);
 

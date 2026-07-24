@@ -38,12 +38,28 @@ static void Init_Module_Done (uint8 module, const char *name)
 }
 
 /*
+函数功能：首次上电等待电源稳定后执行一次完整软件POR复位
+说明：软件POR复位后的第二次启动直接继续初始化，避免重复复位。
+*/
+static void Init_Power_On_Software_Reset (void)
+{
+    if(DL_SYSCTL_RESET_CAUSE_POR_SW_TRIGGERED == DL_SYSCTL_getResetCause())
+    {
+        return;
+    }
+
+    system_delay_ms(INIT_POWER_ON_RESET_DELAY_MS);
+    DL_SYSCTL_resetDevice(DL_SYSCTL_RESET_POR);
+}
+
+/*
 函数功能：系统初始化，按顺序启动所有外设和模块，贯穿上电到主函数的整个准备阶段
 参数：无
 */
 void Init ()
 {
     clock_init(SYSTEM_CLOCK_80M);
+    Init_Power_On_Software_Reset();
     debug_init();
     printf("\r\n[INIT] DEBUG DONE\r\n");
 
@@ -96,8 +112,8 @@ void Init ()
         Encoder_Init();
         Init_Module_Done(INIT_MODULE_ENCODER, "ENCODER");
         system_delay_ms(INIT_MODULE_DELAY_MS);
-        Motor_PID_Structure_Init(&Motor_Left_PID, 0.035f, 0.034f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
-        Motor_PID_Structure_Init(&Motor_Right_PID, 0.03f, 0.028f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+        Motor_PID_Structure_Init(&Motor_Left_PID, 0.019f, 0.026f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+        Motor_PID_Structure_Init(&Motor_Right_PID, 0.027f, 0.016f, 0.015f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
         Motor_PID_Target_Init(enable_k230_line ? 0.0f : MOTOR_PID_TARGET_OFFSET);
         Angle_PID_Structure_Init(&Angle_PID, 15.0f, 0.0f, 0.0f, 10000.0f, ANGLE_PID_INTEGRAL_MAX);
         Straight_PID_Structure_Init(&Straight_PID, 10.0f, 0.0f, 0.0f, STRAIGHT_PID_OUTPUT_MAX, STRAIGHT_PID_INTEGRAL_MAX);
@@ -122,10 +138,9 @@ void Init ()
         system_delay_ms(INIT_MODULE_DELAY_MS);
 
         Init_Module_Start(INIT_MODULE_GIMBAL_POS, "GIMBAL_POSITION");
-        Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);        // 经测试，有时舵机启动错误，所以多启动几次
-        system_delay_ms(30);
-        Gimbal_Set_Multi_Position(GIMBAL_SERVO_1, GIMBAL_STARTUP_SERVO_1_ANGLE_X10);
-        system_delay_ms(30);
+        Gimbal_Set_Servo_1_Startup_Position();
+        // 角度反馈由UART1接收，读取基准角度前先确保全局中断已经开启
+        interrupt_global_enable(0);
         Gimbal_Set_Servo_2_Startup_Position();
         Init_Module_Done(INIT_MODULE_GIMBAL_POS, "GIMBAL_POSITION");
         system_delay_ms(INIT_MODULE_DELAY_MS);

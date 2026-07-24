@@ -43,30 +43,20 @@ int main (void)
 {
     Init();
 
-    Gimbal_Test_Process();
-
     system_delay_ms(1000);
     Buzz(1);
     system_delay_ms(1000);
     Buzz(0);
-    Serial_Send_Byte(K230_START_COMMAND);
 
-    /*
-    K230巡线使用左右轮独立速度环。上电后目标速度保持为0，
-    只有Serial_Process()收到一帧有效的K230数据后才会写入目标速度，
-    因此不会因为K230尚未输出数据而直接起步。
-    */
-    if(enable_k230_line)
-    {
-        Motor_PID_Target_Init(0.0f);
-        Motor_PID_Clear(&Motor_Left_PID);
-        Motor_PID_Clear(&Motor_Right_PID);
-        enable_motor_pid = true;
-    }
+    // Init() 保持K230的完整上电初始化；仅在初始化完成后禁用巡线数据。
+    enable_k230_line = false;
+    enable_gray = false;
+    Motor_PID_Test_Start(MOTOR_PID_TARGET_OFFSET);
 
     while(true)
     {
         Serial_Process();
+        WIFI_Process();
 
         // 目前K230超时计数以此1ms周期为基准。
         system_delay_ms(1);

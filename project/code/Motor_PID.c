@@ -98,6 +98,19 @@ void Motor_PID_Clear (Motor_PID_Struct *pid)
 }
 
 /*
+函数功能：启动左右轮独立速度环测试
+参数：
+target：左右轮相同的目标编码器速度，正数前进，负数后退
+*/
+void Motor_PID_Test_Start (float target)
+{
+    Motor_PID_Target_Init(target);
+    Motor_PID_Clear(&Motor_Left_PID);
+    Motor_PID_Clear(&Motor_Right_PID);
+    enable_motor_pid = true;
+}
+
+/*
 函数功能：速度PID核心计算，返回PWM占空比
 参数：
 pid：速度PID结构体

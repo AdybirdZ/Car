@@ -1,5 +1,6 @@
 #include "Serial.h"
 #include "Motor_PID.h"
+#include <math.h>
 
 bool enable_serial = true;
 bool enable_k230_line = true;
@@ -197,7 +198,7 @@ static void Serial_Stop_K230_Line (void)
 /*
 函数功能：将K230返回的数据进行处理
 参数：
-raw_value：串口返回的夹在#和$之间的数，范围为-400到400
+raw_value：串口返回的夹在#和$之间的带符号数值
 */
 static void Serial_Update_K230_Line (int16 raw_value)
 {
@@ -207,27 +208,13 @@ static void Serial_Update_K230_Line (int16 raw_value)
     float normalized = 0.0f;
     float magnitude = 0.0f;
 
-#if K230_DUAL_LINE_CENTER_MODE
-    /* 双线识别返回的是两条线中点的绝对横坐标，需要先转换为相对道路中心的偏差。 */
-    line_error = raw_value - K230_DUAL_LINE_TARGET_X;
-#endif
-
     value_tens = line_error / 10;               // 除以十后的精度足够用于速度差修正
 
-    if(value_tens > K230_LINE_INPUT_LIMIT)      // 限幅，绝对值大于300的数被限到对应符号的300
-    {
-        value_tens = K230_LINE_INPUT_LIMIT;
-    }
-    else if(value_tens < -K230_LINE_INPUT_LIMIT)
-    {
-        value_tens = -K230_LINE_INPUT_LIMIT;
-    }
-
     abs_value_tens = (value_tens < 0) ? -value_tens : value_tens;
-    normalized = (float)abs_value_tens / (float)K230_LINE_INPUT_LIMIT;                          // 归一化
-    magnitude = K230_LINE_WEIGHT_LIMIT * normalized * normalized * normalized * normalized;     // 权重拟合为四次函数曲线
+    normalized = (float)abs_value_tens / K230_LINE_NORMALIZE_SCALE;
+    magnitude = K230_LINE_WEIGHT_K * powf(normalized, 1.5f);                                     // 权重拟合为1.5次函数曲线
 
-    // 实车约定：K230负值需要向左修正，正值需要向右修正，因此权重与偏差同号
+    // K230负值需要向左修正，正值需要向右修正，推理可知，权重与偏差同号
     if(value_tens > 0)
     {
         k230_line_weight = magnitude;
