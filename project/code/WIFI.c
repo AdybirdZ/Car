@@ -20,8 +20,8 @@
 
 uint8 oscilloscope_count = 0;
 uint8 channel_num = 0;
-bool enable_WIFI = true;
-bool enable_parameter_process = true;      // 是否启用PID调参模式
+bool enable_WIFI = false;
+bool enable_parameter_process = false;      // 是否启用PID调参模式
 
 /*
 函数功能：WiFi在线调参，检测上位机传来的参数更新，实时写入PID参数
