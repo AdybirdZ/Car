@@ -48,15 +48,17 @@ int main (void)
     system_delay_ms(1000);
     Buzz(0);
 
-    // Init() 保持K230的完整上电初始化；仅在初始化完成后禁用巡线数据。
-    enable_k230_line = false;
-    enable_gray = false;
-    Motor_PID_Test_Start(MOTOR_PID_TARGET_OFFSET);
+    // 启动K230双线识别；有效巡线误差由Serial_Process()更新左右轮速度目标。
+    enable_k230_line = true;
+    Serial_Send_Byte(K230_START_COMMAND);
+    Motor_PID_Target_Init(0.0f);
+    Motor_PID_Clear(&Motor_Left_PID);
+    Motor_PID_Clear(&Motor_Right_PID);
+    enable_motor_pid = true;
 
     while(true)
     {
         Serial_Process();
-        WIFI_Process();
 
         // 目前K230超时计数以此1ms周期为基准。
         system_delay_ms(1);

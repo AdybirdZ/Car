@@ -5,7 +5,7 @@
 
 // 多圈位置单位：0.1°
 #define GIMBAL_STARTUP_SERVO_1_ANGLE_X10     (0)
-#define GIMBAL_SERVO_2_STARTUP_OFFSET_X10    (-300)       // 相对上电角度上抬30°
+#define GIMBAL_SERVO_2_STARTUP_OFFSET_X10    (-200)       // 相对上电角度上抬30°
 #define GIMBAL_STARTUP_FEEDBACK_WAIT_MS      (30)
 #define GIMBAL_STARTUP_FEEDBACK_RETRY        (3)
 
