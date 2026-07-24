@@ -39,28 +39,65 @@
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 
 // **************************** 代码区域 ****************************
-int main (void)
+static void K230_Line_Start (void)
 {
-    Init();
-
-    system_delay_ms(1000);
-    Buzz(1);
-    system_delay_ms(1000);
-    Buzz(0);
-
-    // 启动K230双线识别；有效巡线误差由Serial_Process()更新左右轮速度目标。
+    Serial_Clear_Road_Flags();
     enable_k230_line = true;
-    Serial_Send_Byte(K230_START_COMMAND);
     Motor_PID_Target_Init(0.0f);
     Motor_PID_Clear(&Motor_Left_PID);
     Motor_PID_Clear(&Motor_Right_PID);
     enable_motor_pid = true;
+    Serial_Send_Byte(K230_START_COMMAND);
+}
+
+static void K230_Line_Stop (void)
+{
+    Serial_Send_Byte(K230_STOP_COMMAND);
+    enable_k230_line = false;
+}
+
+static void Wait_K230_Road_Flag (volatile uint8 *flag)
+{
+    while(!(*flag))
+    {
+        Serial_Process();
+        system_delay_ms(1);
+    }
+
+    *flag = 0;
+}
+
+int main (void)
+{
+    Init();
+
+    K230_Line_Start();
+    Wait_K230_Road_Flag(&stop_flag);
+    K230_Line_Stop();
+
+    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 1000);
+    Buzz(1);
+    system_delay_ms(3000);
+    Buzz(0);
+
+    (void)Action_Turn_Direction(180.0f, ACTION_TURN_COUNTERCLOCKWISE);
+
+    K230_Line_Start();
+    Wait_K230_Road_Flag(&right_flag);
+    K230_Line_Stop();
+
+    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 1000);
+    Buzz(1);
+    system_delay_ms(3000);
+    Buzz(0);
+
+    (void)Action_Turn_Right();
 
     while(true)
     {
-        Serial_Process();
-
-        // 目前K230超时计数以此1ms周期为基准。
-        system_delay_ms(1);
+        Buzz(1);
+        system_delay_ms(1000);
+        Buzz(0);
+        system_delay_ms(1000);
     }
 }

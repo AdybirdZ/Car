@@ -1,5 +1,4 @@
 #include "Action.h"
-#include "WIFI.h"
 #include "Straight_PID.h"
 
 uint16 straight_count = 0;
@@ -52,7 +51,6 @@ uint8 Action_Turn_To (float target)
         }
 
         system_delay_ms(ANGLE_PID_PERIOD_MS);
-        //WIFI_Process();
         timeout_count ++;
     }
 
@@ -81,6 +79,40 @@ uint8 Action_Turn (float angle)
 }
 
 /*
+函数功能：按指定方向原地转动指定角度
+参数：
+angle：转动角度的绝对值，单位为度
+direction：ACTION_TURN_CLOCKWISE为顺时针，ACTION_TURN_COUNTERCLOCKWISE为逆时针
+返回值：1表示全部转动完成，0表示参数错误或任一分段未稳定到位
+*/
+uint8 Action_Turn_Direction (float angle, int8 direction)
+{
+    float step_angle = 0.0f;
+
+    if(direction != ACTION_TURN_CLOCKWISE && direction != ACTION_TURN_COUNTERCLOCKWISE)
+    {
+        return 0;
+    }
+
+    if(angle < 0.0f)
+    {
+        angle = -angle;
+    }
+
+    while(angle > 0.0f)
+    {
+        step_angle = (angle > ACTION_TURN_DIRECTION_STEP) ? ACTION_TURN_DIRECTION_STEP : angle;
+        if(!Action_Turn(step_angle * direction))
+        {
+            return 0;
+        }
+        angle -= step_angle;
+    }
+
+    return 1;
+}
+
+/*
 函数功能：快捷右转90°
 参数：无
 */
@@ -96,6 +128,25 @@ uint8 Action_Turn_Right ()
 uint8 Action_Turn_Left ()
 {
     return Action_Turn(ACTION_TURN_LEFT_ANGLE);
+}
+
+/*
+函数功能：左右轮使用相同速度目标行驶指定时间，随后停车
+参数：
+target：左右轮速度环目标
+duration_ms：行驶时间，单位为毫秒
+*/
+void Action_Drive_Equal_Target (float target, uint32 duration_ms)
+{
+    enable_angle_pid = false;
+    Straight_PID_Stop();
+    Motor_PID_Target_Init(target);
+    Motor_PID_Clear(&Motor_Left_PID);
+    Motor_PID_Clear(&Motor_Right_PID);
+    enable_motor_pid = true;
+
+    system_delay_ms(duration_ms);
+    Motor_Stop();
 }
 
 /*
@@ -115,7 +166,6 @@ void Straight_Forward (float time)
     {
         straight_count++;
         system_delay_ms(MOTOR_PID_PERIOD_MS);
-        //WIFI_Process();
     }
 
     straight_count = 0;
@@ -130,7 +180,6 @@ void Straight_Backward (float time)
     {
         straight_count++;
         system_delay_ms(MOTOR_PID_PERIOD_MS);
-        //WIFI_Process();
     }
 
     straight_count = 0;
