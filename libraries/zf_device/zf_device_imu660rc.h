@@ -182,7 +182,6 @@ extern int16 imu660rc_gyro_x,   imu660rc_gyro_y,    imu660rc_gyro_z;    // ÈıÖáÍ
 extern int16 imu660rc_acc_x ,   imu660rc_acc_y ,    imu660rc_acc_z;     // ÈıÖá¼ÓËÙ¶È¼ÆÊı¾İ
 extern float imu660rc_roll  ,   imu660rc_pitch ,    imu660rc_yaw;       // Å·À­½Ç
 extern float imu660rc_quarternion[4];
-extern volatile uint8 imu660rc_quarternion_ready;                                   // ËÄÔªÊı
 
 
 void    imu660rc_get_acc            (void);

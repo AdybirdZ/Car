@@ -112,8 +112,8 @@ void Init ()
         Encoder_Init();
         Init_Module_Done(INIT_MODULE_ENCODER, "ENCODER");
         system_delay_ms(INIT_MODULE_DELAY_MS);
-        Motor_PID_Structure_Init(&Motor_Left_PID, 0.019f, 0.026f, 0.016f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
-        Motor_PID_Structure_Init(&Motor_Right_PID, 0.027f, 0.016f, 0.015f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+        Motor_PID_Structure_Init(&Motor_Left_PID, 0.025f, 0.025f, 0.012f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
+        Motor_PID_Structure_Init(&Motor_Right_PID, 0.037f, 0.04f, 0.01f, PWM_MAX, MOTOR_PID_INTEGRAL_MAX);
         Motor_PID_Target_Init(enable_k230_line ? 0.0f : MOTOR_PID_TARGET_OFFSET);
         Angle_PID_Structure_Init(&Angle_PID, 15.0f, 0.0f, 0.0f, 10000.0f, ANGLE_PID_INTEGRAL_MAX);
         Straight_PID_Structure_Init(&Straight_PID, 10.0f, 0.0f, 0.0f, STRAIGHT_PID_OUTPUT_MAX, STRAIGHT_PID_INTEGRAL_MAX);

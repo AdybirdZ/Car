@@ -76,27 +76,34 @@ int main (void)
 {
     Init();
 
+    system_delay_ms(100);
+    Position_Update();
+    angle_actual = euler_angle[YAW];
+    Angle_PID_Target_Init(angle_actual);
+
     K230_Line_Start();
     Wait_K230_Road_Flag(&stop_flag);
     K230_Line_Disable();
 
-    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 1000);
+    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 500);
     Buzz(1);
     system_delay_ms(3000);
     Buzz(0);
 
-    (void)Action_Turn_Direction(180.0f, ACTION_TURN_COUNTERCLOCKWISE);
+    Action_Turn_Direction(180.0f, ACTION_TURN_COUNTERCLOCKWISE);
 
     K230_Line_Start();
-    Wait_K230_Road_Flag(&right_flag);
+    Wait_K230_Road_Flag(&stop_flag);
     K230_Line_Stop();
 
-    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 1000);
+    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 500);
     Buzz(1);
     system_delay_ms(3000);
     Buzz(0);
 
-    (void)Action_Turn_Right();
+    Action_Turn_Right();
+
+    K230_Line_Start();
 
     while(true)
     {

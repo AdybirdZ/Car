@@ -4,16 +4,35 @@
 uint16 straight_count = 0;
 
 /*
+函数功能：切换到角度环转弯模式
+参数：
+target：绝对目标角度
+*/
+static void Action_Angle_PID_Start (float target)
+{
+    enable_angle_pid = false;
+    enable_motor_pid = false;
+    Straight_PID_Stop();
+    enable_gray_line = false;
+
+    Motor_PID_Clear(&Motor_Left_PID);
+    Motor_PID_Clear(&Motor_Right_PID);
+    Angle_PID_Clear(&Angle_PID);
+    Angle_PID_Target_Init(target);
+
+    enable_angle_pid = true;
+}
+
+/*
 函数功能：原地旋转到指定朝向，返回值为0或1（1表示转到位了，0表示超时或没转到位）
 参数：
-target：绝对目标角度（范围在0°-360°之间）
+target：绝对目标角度（范围在0°到360°之间）
 */
 uint8 Action_Turn_To (float target)
 {
     uint16 timeout_count = 0;
     uint8 stable_count = 0;
     uint8 last_enable_motor_pid = enable_motor_pid;
-    uint8 last_enable_angle_pid = enable_angle_pid;
     uint8 last_enable_gray_line = enable_gray_line;
     float error = 0.0f;
 
@@ -26,12 +45,7 @@ uint8 Action_Turn_To (float target)
     angle_actual = euler_angle[YAW];
     target = Angle_Normalize(target);
 
-    Angle_PID_Clear(&Angle_PID);
-    Angle_PID_Target_Init(target);
-
-    enable_gray_line = false;
-    enable_motor_pid = false;
-    enable_angle_pid = true;
+    Action_Angle_PID_Start(target);
 
     while(timeout_count < (ACTION_TURN_TIMEOUT_MS / ANGLE_PID_PERIOD_MS))                       // 转弯3秒即超时，强行退出
     {
@@ -58,7 +72,7 @@ uint8 Action_Turn_To (float target)
     Set_PWM(0, RIGHT_MOTOR);
     Angle_PID_Clear(&Angle_PID);
 
-    enable_angle_pid = last_enable_angle_pid;
+    enable_angle_pid = false;
     enable_motor_pid = last_enable_motor_pid;
     enable_gray_line = last_enable_gray_line;
 
@@ -88,6 +102,7 @@ direction：ACTION_TURN_CLOCKWISE为顺时针，ACTION_TURN_COUNTERCLOCKWISE为�
 uint8 Action_Turn_Direction (float angle, int8 direction)
 {
     float step_angle = 0.0f;
+    float step_target = 0.0f;
 
     if(direction != ACTION_TURN_CLOCKWISE && direction != ACTION_TURN_COUNTERCLOCKWISE)
     {
@@ -99,13 +114,19 @@ uint8 Action_Turn_Direction (float angle, int8 direction)
         angle = -angle;
     }
 
+    Position_Update();
+    step_target = euler_angle[YAW];
+
     while(angle > 0.0f)
     {
         step_angle = (angle > ACTION_TURN_DIRECTION_STEP) ? ACTION_TURN_DIRECTION_STEP : angle;
-        if(!Action_Turn(step_angle * direction))
+        step_target = Angle_Normalize(step_target + step_angle * direction);
+
+        while(!Action_Turn_To(step_target))
         {
-            return 0;
+            system_delay_ms(ANGLE_PID_PERIOD_MS);
         }
+
         angle -= step_angle;
     }
 
