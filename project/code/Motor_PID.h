@@ -5,7 +5,7 @@
 #include "Motor.h"
 
 #define MOTOR_PID_PERIOD_MS        (20)
-#define MOTOR_PID_TARGET_OFFSET    (150.0f)
+#define MOTOR_PID_TARGET_OFFSET    (230.0f)
 #define MOTOR_PID_INTEGRAL_MAX     (1000.0f)
 
 typedef struct
