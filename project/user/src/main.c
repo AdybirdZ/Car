@@ -39,6 +39,7 @@
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 
 // **************************** 代码区域 ****************************
+#if 0
 static void K230_Line_Start (void)
 {
     Serial_Clear_Road_Flags();
@@ -110,6 +111,23 @@ int main (void)
         Buzz(1);
         system_delay_ms(1000);
         Buzz(0);
+        system_delay_ms(1000);
+    }
+}
+#endif
+
+int main (void)
+{
+    Init();
+
+    Step_Init();
+    Step_Set_Direction(STEP_DIRECTION_FORWARD);
+    Step_Set_Frequency(2);             // 2Hz：每0.5秒产生一个步进脉冲
+    Step_Enable();
+    Step_Start();
+
+    while(true)
+    {
         system_delay_ms(1000);
     }
 }
