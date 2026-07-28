@@ -12,7 +12,7 @@
 #define STEP_DIRECTION_REVERSE        (1)
 
 #define STEP_DEFAULT_FREQUENCY_HZ     (2)                   // 2Hz表示每0.5秒产生一个脉冲
-#define STEP_PWM_DUTY                 (1U)                  // 2Hz时高电平约46us，接近官方例程的短脉冲
+#define STEP_PWM_DUTY                 (1)                   // 官方默认占空比为10000，所以1/10000=0.01%，能产生短脉冲
 
 extern uint32 step_frequency_hz;
 extern uint8 step_direction;
