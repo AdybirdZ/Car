@@ -38,96 +38,12 @@
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 
-// **************************** 代码区域 ****************************
-#if 0
-static void K230_Line_Start (void)
-{
-    Serial_Clear_Road_Flags();
-    enable_k230_line = true;
-    Motor_PID_Target_Init(0.0f);
-    Motor_PID_Clear(&Motor_Left_PID);
-    Motor_PID_Clear(&Motor_Right_PID);
-    enable_motor_pid = true;
-    Serial_Send_Byte(K230_START_COMMAND);
-}
-
-static void K230_Line_Stop (void)
-{
-    Serial_Send_Byte(K230_STOP_COMMAND);
-    enable_k230_line = false;
-}
-
-static void K230_Line_Disable (void)
-{
-    enable_k230_line = false;
-}
-
-static void Wait_K230_Road_Flag (volatile uint8 *flag)
-{
-    while(!(*flag))
-    {
-        Serial_Process();
-        system_delay_ms(1);
-    }
-
-    *flag = 0;
-}
-
 int main (void)
 {
     Init();
 
-    system_delay_ms(100);
-    Position_Update();
-    angle_actual = euler_angle[YAW];
-    Angle_PID_Target_Init(angle_actual);
-
-    K230_Line_Start();
-    Wait_K230_Road_Flag(&stop_flag);
-    K230_Line_Disable();
-
-    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 500);
-    Buzz(1);
-    system_delay_ms(3000);
-    Buzz(0);
-
-    Action_Turn_Direction(180.0f, ACTION_TURN_COUNTERCLOCKWISE);
-
-    K230_Line_Start();
-    Wait_K230_Road_Flag(&stop_flag);
-    K230_Line_Stop();
-
-    Action_Drive_Equal_Target(MOTOR_PID_TARGET_OFFSET, 500);
-    Buzz(1);
-    system_delay_ms(3000);
-    Buzz(0);
-
-    Action_Turn_Right();
-
-    K230_Line_Start();
-
     while(true)
     {
-        Buzz(1);
-        system_delay_ms(1000);
-        Buzz(0);
-        system_delay_ms(1000);
-    }
-}
-#endif
-
-int main (void)
-{
-    Init();
-
-    Step_Init();
-    Step_Set_Direction(STEP_DIRECTION_FORWARD);
-    Step_Set_Frequency(2);             // 2Hz：每0.5秒产生一个步进脉冲
-    Step_Enable();
-    Step_Start();
-
-    while(true)
-    {
-        system_delay_ms(1000);
+        // 仅保持已初始化的外设和中断运行，不执行任何控制动作。
     }
 }
