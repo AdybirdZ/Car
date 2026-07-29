@@ -56,7 +56,8 @@ static void Init_Power_On_Software_Reset (void)
 函数功能：系统初始化，按顺序启动所有外设和模块，贯穿上电到主函数的整个准备阶段
 参数：无
 */
-void Init ()
+#if 0
+void Init_Legacy (void)
 {
     clock_init(SYSTEM_CLOCK_80M);
     Init_Power_On_Software_Reset();
@@ -148,6 +149,43 @@ void Init ()
 
     pit_ms_init(PIT_TIM_G12, MOTOR_PID_PERIOD_MS, pit_handler, (void *)&pit_flag);
     interrupt_global_enable(0);
+    init_current_module = 0;
+    printf("[INIT] ALL DONE\r\n");
+}
+#endif
+
+// 电赛专用初始化代码第一版：仅初始化上电复位、K230、蜂鸣器&LED、灰度巡线模块
+void Init (void)
+{
+    clock_init(SYSTEM_CLOCK_80M);
+    Init_Power_On_Software_Reset();
+
+    debug_init();
+    printf("\r\n[INIT] DEBUG DONE\r\n");
+
+    // 强行启用K230串口和灰度传感器，防止忘记更改
+    enable_serial = true;
+    enable_gray = true;
+
+    Init_Module_Start(INIT_MODULE_POSITION, "K230_SERIAL");
+    Serial_Init();
+    system_delay_ms(K230_START_DELAY_MS);
+    Init_Module_Done(INIT_MODULE_POSITION, "K230_SERIAL");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+
+    Init_Module_Start(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
+    Light_and_Buzz_Init();
+    Init_Module_Done(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+/*
+    Init_Module_Start(INIT_MODULE_GRAY, "GRAY");
+    Gray_Init();
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+    Gray_Wait_First_Data();
+    Init_Module_Done(INIT_MODULE_GRAY, "GRAY");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+*/
+    interrupt_global_enable(0);         // 开启中断
     init_current_module = 0;
     printf("[INIT] ALL DONE\r\n");
 }

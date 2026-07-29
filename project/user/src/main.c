@@ -40,10 +40,15 @@
 
 int main (void)
 {
-    Init();
+   Init();
+
+    Step_Init();
+    Step_Enable();
+
+    Step_Move_Angle(30.0f, 50);
 
     while(true)
     {
-        // 仅保持已初始化的外设和中断运行，不执行任何控制动作。
+        system_delay_ms(1000);
     }
 }
