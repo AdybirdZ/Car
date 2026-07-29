@@ -21,6 +21,9 @@
 #include "MPU6050.h"
 #include "Euler.h"
 #include "Step.h"
+#include "Button.h"
+#include "OLED.h"
+#include "Ball_PID.h"
 
 #define INIT_MODULE_DELAY_MS      (100)       // 不同模块初始化之间的等待时间，单位为毫秒
 #define INIT_DIAGNOSTIC_ENABLE    (1)         // 1=初始化时输出日志并蜂鸣报码，0=关闭诊断提示

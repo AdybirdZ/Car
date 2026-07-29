@@ -135,7 +135,7 @@ static uint8 Serial_Parse_Number_Result (const char *message)
 *str：待解析的字符串
 *result：将解析好的带符号的数字存储的位置
 */
-static uint8 Serial_Parse_Signed_Int (const char *str, int16 *result)
+uint8 Serial_Parse_Signed_Int (const char *str, int16 *result)
 {
     uint16 index = 0;
     int32 value = 0;

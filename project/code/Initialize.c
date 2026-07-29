@@ -154,7 +154,7 @@ void Init_Legacy (void)
 }
 #endif
 
-// 电赛专用初始化代码第一版：仅初始化上电复位、K230、蜂鸣器&LED、灰度巡线模块
+// 电赛专用初始化：初始化上电复位、K230、蜂鸣器/LED、按键和OLED
 void Init (void)
 {
     clock_init(SYSTEM_CLOCK_80M);
@@ -163,9 +163,14 @@ void Init (void)
     debug_init();
     printf("\r\n[INIT] DEBUG DONE\r\n");
 
-    // 强行启用K230串口和灰度传感器，防止忘记更改
+    // 灰度巡线和现有电机模块明天更换，先不参与初始化
     enable_serial = true;
-    enable_gray = true;
+    enable_gray = false;
+
+    Light_and_Buzz_Init();
+    Init_Module_Start(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
+    Init_Module_Done(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
 
     Init_Module_Start(INIT_MODULE_POSITION, "K230_SERIAL");
     Serial_Init();
@@ -173,18 +178,9 @@ void Init (void)
     Init_Module_Done(INIT_MODULE_POSITION, "K230_SERIAL");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
-    Init_Module_Start(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
-    Light_and_Buzz_Init();
-    Init_Module_Done(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
-    system_delay_ms(INIT_MODULE_DELAY_MS);
-/*
-    Init_Module_Start(INIT_MODULE_GRAY, "GRAY");
-    Gray_Init();
-    system_delay_ms(INIT_MODULE_DELAY_MS);
-    Gray_Wait_First_Data();
-    Init_Module_Done(INIT_MODULE_GRAY, "GRAY");
-    system_delay_ms(INIT_MODULE_DELAY_MS);
-*/
+    Button_Init();
+    OLED_Init();
+
     interrupt_global_enable(0);         // 开启中断
     init_current_module = 0;
     printf("[INIT] ALL DONE\r\n");

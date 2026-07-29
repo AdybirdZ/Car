@@ -40,15 +40,30 @@
 
 int main (void)
 {
-   Init();
+    Init();
 
-    Step_Init();
+    // 初始化完成后等待A30启动键；等待期间B1仍可选择mode。
+    while(!Button_Get_Start_Event())
+    {
+        Button_Scan_10ms();
+        OLED_Process();
+        system_delay_ms(BUTTON_SCAN_PERIOD_MS);
+    }
+
+    // 题目要求按键启动时开始计时，后续主程序也从这里开始执行。
+    OLED_Start_Time();
+
+    Step_Init();            // 这里的初始化代码以后放到Init里面去
     Step_Enable();
+    Ball_PID_Init();
 
-    Step_Move_Angle(30.0f, 50);
+    Ball_PID_Set(0.0f, 0.0f, 0.0f);             // 调PID改这里就行了
+    Ball_PID_Set_Step_Frequency(500);
 
     while(true)
     {
-        system_delay_ms(1000);
+        Ball_PID_Process();
+        OLED_Process();
+        system_delay_ms(10);
     }
 }
