@@ -163,10 +163,10 @@ void Init (void)
     debug_init();
     printf("\r\n[INIT] DEBUG DONE\r\n");
 
-    // 旧灰度巡线和现有电机模块不再使用，启用新的八路并行红外巡线输入。
+    // 使用原灰度巡线和新的 TB6612 电机模块，停用八路并行红外巡线。
     enable_serial = true;
-    enable_gray = false;
-    enable_ir = true;
+    enable_gray = true;
+    enable_ir = false;
 
     Light_and_Buzz_Init();
     Init_Module_Start(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
@@ -179,9 +179,26 @@ void Init (void)
     Init_Module_Done(INIT_MODULE_POSITION, "K230_SERIAL");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
-    Init_Module_Start(INIT_MODULE_IR, "IR_LINE_SENSOR");
-    IR_Init();
-    Init_Module_Done(INIT_MODULE_IR, "IR_LINE_SENSOR");
+    Init_Module_Start(INIT_MODULE_GRAY, "GRAY_LINE_SENSOR");
+    Gray_Init();
+    Gray_Wait_First_Data();
+    Init_Module_Done(INIT_MODULE_GRAY, "GRAY_LINE_SENSOR");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+
+    // 旧 Motor/Encoder/Motor_PID 不再初始化，改用 TB6612 和增量编码器新模块。
+    Init_Module_Start(INIT_MODULE_MOTOR, "MOTOR_NEW");
+    Motor_New_Init();
+    Init_Module_Done(INIT_MODULE_MOTOR, "MOTOR_NEW");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+
+    Init_Module_Start(INIT_MODULE_ENCODER, "ENCODER_NEW");
+    Encoder_New_Init();
+    Init_Module_Done(INIT_MODULE_ENCODER, "ENCODER_NEW");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+
+    Init_Module_Start(INIT_MODULE_MOTOR_PID_NEW, "MOTOR_PID_NEW");
+    Motor_PID_New_Init();
+    Init_Module_Done(INIT_MODULE_MOTOR_PID_NEW, "MOTOR_PID_NEW");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
     Button_Init();

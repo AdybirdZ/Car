@@ -4,7 +4,7 @@ bool enable_ir = true;
 uint8 ir_value = 0;
 uint8 ir_data[IR_CHANNEL_NUM] = {0};
 
-// 数组下标0到7依次对应车辆从左到右的IR1到IR8。
+// 数组下标0到7依次对应车辆从左到右的IR1到IR8
 static const gpio_pin_enum ir_pin[IR_CHANNEL_NUM] =
 {
     IR_CHANNEL_1_PIN,
@@ -20,7 +20,6 @@ static const gpio_pin_enum ir_pin[IR_CHANNEL_NUM] =
 /*
 函数功能：初始化八路并行红外巡线传感器的GPIO输入
 参数：无
-说明：使用内部上拉可避免传感器未连接时输入悬空；传感器输出电压不得超过单片机IO允许电压。
 */
 void IR_Init (void)
 {

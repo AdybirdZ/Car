@@ -16,7 +16,7 @@
 #define IR_CHANNEL_8_PIN    (A23)
 
 // 多数数字红外模块检测到黑线时输出低电平；若实测相反，将其改为GPIO_HIGH。
-#define IR_ACTIVE_LEVEL     (GPIO_LOW)
+#define IR_ACTIVE_LEVEL     (GPIO_HIGH)
 
 extern bool enable_ir;
 extern uint8 ir_value;

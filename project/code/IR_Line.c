@@ -4,7 +4,7 @@ volatile bool enable_ir_line = true;
 uint8 ir_line_active_level = IR_ACTIVE_LEVEL;
 uint8 ir_line_found = 0;
 
-// IR1到IR8必须按车辆从左到右排列，负权重表示黑线在车体左侧，正权重表示在右侧。
+// IR1到IR8必须按车辆从左到右排列，负权重表示黑线在车体左侧，正权重表示在右侧
 float ir_line_weight[IR_LINE_WEIGHT_NUM] = {-9.0f, -6.0f, -1.5f, 0.0f, 0.0f, 1.5f, 6.0f, 9.0f};
 float ir_line_k = 40.0f;
 float ir_line_base_offset = MOTOR_PID_TARGET_OFFSET;
@@ -26,7 +26,6 @@ static float IR_Line_Abs (float value)
 /*
 函数功能：红外巡线目标更新，依次完成传感器读取、黑线查找、差速计算和电机目标写入
 参数：无
-说明：多个通道同时检测到黑线时，沿用Gray_Line的策略，采用离车体中心最远通道的权重。
 */
 void IR_Line_Update_Target (void)
 {
@@ -52,7 +51,7 @@ void IR_Line_Update_Target (void)
         {
             abs_weight = IR_Line_Abs(ir_line_weight[i]);
 
-            if(abs_weight > max_abs_weight)
+            if(abs_weight > max_abs_weight)         // 多个通道同时检测到黑线时采用离车体中心最远通道的权重
             {
                 max_abs_weight = abs_weight;
                 ir_line_error = ir_line_weight[i];

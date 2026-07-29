@@ -3,6 +3,7 @@
 
 #include "Gray.h"
 #include "Motor_PID.h"
+#include "Motor_PID_New.h"
 
 #define GRAY_LINE_WEIGHT_NUM    (GRAY_CHANNEL_NUM)
 

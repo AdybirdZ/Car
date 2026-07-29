@@ -53,16 +53,22 @@ int main (void)
     // 题目要求按键启动时开始计时，后续主程序也从这里开始执行。
     OLED_Start_Time();
 
+#if 0
     Step_Init();            // 这里的初始化代码以后放到Init里面去
-    Step_Enable();
-    Ball_PID_Init();
+    Motor_PID_New_Start(300.0f, 300.0f);
 
     Ball_PID_Set(0.0f, 0.0f, 0.0f);             // 调PID改这里就行了
-    Ball_PID_Set_Step_Frequency(500);
 
+#endif
+    // 双轮速度 PID 测试：左、右轮目标速度均为 300 mm/s。
+    Motor_PID_New_Start(300.0f, 300.0f);
+
+    enable_gray_line = false;
+    //gray_line_base_offset = 300.0f;
+    //Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
     while(true)
     {
-        Ball_PID_Process();
+        // Gray_Line_Update_Target();
         OLED_Process();
         system_delay_ms(10);
     }

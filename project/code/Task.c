@@ -1,79 +1,54 @@
 #include "Task.h"
-// 目前只有一个task：直角转弯
+
+// 当前任务：车辆经过A点的垂直黑色启停线时停车。
 bool enable_task = true;
-uint16 task_all_white_count = 0;
-uint8 task_turn_lock = 0;
-float task_turn_target_angle = 0.0f;
+uint8 task_stop_flag = 0;
 
 /*
-函数功能：全白检测，判断八路灰度传感器是否全部看到白色，返回1表示全白，返回0表示至少有一个传感器压到黑线
+函数功能：检测A点启停线
 参数：无
+返回值：1表示左2、左1、右1、右2四路均检测到黑色，0表示不是启停线
 */
-static uint8 Task_Is_All_White ()
+static uint8 Task_Is_Stop_Line (void)
 {
-    if(gray_line_black_level)
-    {
-        return (0x00 == gray_value);
-    }
-
-    return (0xFF == gray_value);
+    return (IR_ACTIVE_LEVEL == ir_data[TASK_STOP_LEFT_2_INDEX]
+         && IR_ACTIVE_LEVEL == ir_data[TASK_STOP_LEFT_1_INDEX]
+         && IR_ACTIVE_LEVEL == ir_data[TASK_STOP_RIGHT_1_INDEX]
+         && IR_ACTIVE_LEVEL == ir_data[TASK_STOP_RIGHT_2_INDEX]);
 }
 
 /*
-函数功能：任务模块初始化，清零计数器和锁存标志，设定默认控制模式
+函数功能：任务模块初始化，清除停车锁存标志并恢复红外巡线输出
 参数：无
 */
-void Task_Init ()
+void Task_Init (void)
 {
-    task_all_white_count = 0;
-    task_turn_lock = 0;
-    task_turn_target_angle = 0.0f;
+    task_stop_flag = 0;
 
-    if(enable_task)
+    if(enable_task && enable_ir)
     {
-        enable_motor_pid = true;
-        enable_angle_pid = false;
-        enable_gray_line = true;
+        enable_ir_line = true;
     }
 }
 
 /*
-函数功能：任务状态机更新（检测直角路口→触发转弯→恢复巡线）
+函数功能：刷新红外数据并检测A点启停线，检测到后立即停车且锁存结果
+参数：无
+说明：本函数应在车辆行驶期间被周期调用，例如每次主循环调用一次。
 */
-void Task_Update ()
+void Task_Update (void)
 {
-    if(!enable_task || !enable_gray)
+    if(!enable_task || !enable_ir || task_stop_flag)
     {
         return;
     }
 
-    Gray_Update();
+    IR_Update();
 
-    if(!Task_Is_All_White())
+    if(Task_Is_Stop_Line())
     {
-        task_all_white_count = 0;
-        task_turn_lock = 0;
-        enable_motor_pid = true;
-        enable_angle_pid = false;
-        enable_gray_line = true;
-        return;
-    }
-
-    if(task_turn_lock)
-    {
-        return;
-    }
-
-    task_all_white_count ++;
-
-    if(task_all_white_count >= TASK_ALL_WHITE_COUNT)
-    {
-        task_all_white_count = 0;
-        task_turn_lock = 1;
-        task_turn_target_angle = Angle_Normalize(task_turn_target_angle - TASK_LEFT_TURN_ANGLE);
-        Action_Turn_To(task_turn_target_angle);
-        enable_motor_pid = true;
-        enable_angle_pid = false;
-        enable_gray_line = true;
+        task_stop_flag = 1;
+        enable_ir_line = false;
+        Motor_Stop();
     }
 }

@@ -11,6 +11,9 @@
 #include "IR_Line.h"
 #include "Motor.h"
 #include "Motor_PID.h"
+#include "Motor_New.h"
+#include "Encoder_New.h"
+#include "Motor_PID_New.h"
 #include "Angle_PID.h"
 #include "Straight_PID.h"
 #include "Acc_PID.h"
@@ -41,6 +44,7 @@
 #define INIT_MODULE_GIMBAL        (8)
 #define INIT_MODULE_GIMBAL_POS    (9)
 #define INIT_MODULE_IR            (10)
+#define INIT_MODULE_MOTOR_PID_NEW (11)
 
 extern volatile uint8 init_current_module;
 
