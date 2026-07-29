@@ -130,16 +130,12 @@ void Step_Stop (void)
 }
 
 /*
-函数功能：让步进电机转动指定角度
+函数功能：让步进电机转动指定角度，计算目标脉冲数，再根据脉冲频率计算运行时间，函数结束时电机仍保持当前位置，阻塞式函数
 参数说明：
 angle：目标角度，正数使用正转方向，负数使用反转方向
 frequency_hz：STEP脉冲频率，单位Hz
-说明：
-函数根据电机整步数和驱动器细分数计算目标脉冲数，再根据脉冲频率计算运行时间。
-函数结束时只停止STEP脉冲，不关闭驱动器，因此电机仍保持当前位置。
-该函数为阻塞式函数，执行期间不会返回主循环。
 */
-void Step_Move_Angle (float angle, uint32 frequency_hz)
+void Step_Move_Angle (float angle, uint32 frequency_hz)         // 正数为逆时针，负数为顺时针
 {
     float angle_abs = angle;
     float moved_angle;

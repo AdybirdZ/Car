@@ -7,6 +7,8 @@
 #include "Encoder.h"
 #include "Gray.h"
 #include "Gray_Line.h"
+#include "IR.h"
+#include "IR_Line.h"
 #include "Motor.h"
 #include "Motor_PID.h"
 #include "Angle_PID.h"
@@ -38,6 +40,7 @@
 #define INIT_MODULE_WIFI          (7)
 #define INIT_MODULE_GIMBAL        (8)
 #define INIT_MODULE_GIMBAL_POS    (9)
+#define INIT_MODULE_IR            (10)
 
 extern volatile uint8 init_current_module;
 

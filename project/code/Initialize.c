@@ -163,9 +163,10 @@ void Init (void)
     debug_init();
     printf("\r\n[INIT] DEBUG DONE\r\n");
 
-    // 灰度巡线和现有电机模块明天更换，先不参与初始化
+    // 旧灰度巡线和现有电机模块不再使用，启用新的八路并行红外巡线输入。
     enable_serial = true;
     enable_gray = false;
+    enable_ir = true;
 
     Light_and_Buzz_Init();
     Init_Module_Start(INIT_MODULE_LIGHT, "LIGHT_BUZZER");
@@ -176,6 +177,11 @@ void Init (void)
     Serial_Init();
     system_delay_ms(K230_START_DELAY_MS);
     Init_Module_Done(INIT_MODULE_POSITION, "K230_SERIAL");
+    system_delay_ms(INIT_MODULE_DELAY_MS);
+
+    Init_Module_Start(INIT_MODULE_IR, "IR_LINE_SENSOR");
+    IR_Init();
+    Init_Module_Done(INIT_MODULE_IR, "IR_LINE_SENSOR");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
     Button_Init();
