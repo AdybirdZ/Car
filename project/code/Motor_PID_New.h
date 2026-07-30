@@ -8,7 +8,7 @@
 #define MOTOR_PID_NEW_PERIOD_MS          (10)
 #define MOTOR_PID_NEW_TIMER              (PIT_TIM_G0)
 #define MOTOR_PID_NEW_TARGET_DEFAULT     (200.0f)
-#define MOTOR_PID_NEW_KP_DEFAULT         (0.25f)
+#define MOTOR_PID_NEW_KP_DEFAULT         (0.27f)
 #define MOTOR_PID_NEW_KI_DEFAULT         (0.5f)
 #define MOTOR_PID_NEW_KD_DEFAULT         (0.0f)
 

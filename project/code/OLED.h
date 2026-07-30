@@ -2,7 +2,7 @@
 #define _OLED_H_
 
 #include "zf_common_headfile.h"
-#include "zf_device_oled.h"
+#include "zf_device_ips200pro.h"
 
 #define OLED_MODE_MIN                   (1)
 #define OLED_MODE_MAX                   (6)
@@ -15,6 +15,7 @@ extern volatile uint32 oled_elapsed_tenths;
 
 void OLED_Init (void);
 void OLED_Start_Time (void);
+void OLED_Stop_Time (void);
 void OLED_Show_Time (void);
 void OLED_Show_Mode (void);
 void OLED_Process (void);

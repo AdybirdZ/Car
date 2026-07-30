@@ -60,8 +60,9 @@ int main (void)
     Ball_PID_Set(0.0f, 0.0f, 0.0f);             // 调PID改这里就行了
 
 #endif
-    // 灰度巡线：以基准速度启动霍尔速度 PID，后续每 10 ms 更新左右轮目标。
+    // 双轮直行测试：保留当前的 PID 参数和基准速度，暂时不执行巡线修正。
     enable_gray_line = true;
+
     Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
 
     while(true)

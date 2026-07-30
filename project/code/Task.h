@@ -9,6 +9,9 @@
 #define TASK_STOP_LEFT_1_INDEX         (3)
 #define TASK_STOP_RIGHT_1_INDEX        (4)
 #define TASK_STOP_RIGHT_2_INDEX        (5)
+#define TASK_STOP_DELAY_MS             (520)
+#define TASK_UPDATE_PERIOD_MS          (10)
+#define TASK_STOP_DELAY_TICKS          (TASK_STOP_DELAY_MS / TASK_UPDATE_PERIOD_MS)
 
 extern bool enable_task;
 extern uint8 task_stop_flag;

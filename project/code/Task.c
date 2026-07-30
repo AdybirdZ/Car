@@ -1,8 +1,11 @@
 #include "Task.h"
+#include "OLED.h"
 
 // 当前任务：车辆经过中间四路全黑的停车线时停车。
 bool enable_task = true;
 uint8 task_stop_flag = 0;
+static uint8 task_stop_pending = 0;
+static uint8 task_stop_delay_ticks = 0;
 
 /*
 函数功能：检测A点启停线
@@ -11,10 +14,18 @@ uint8 task_stop_flag = 0;
 */
 static uint8 Task_Is_Stop_Line (void)
 {
-    return (gray_line_black_level == gray_data[TASK_STOP_LEFT_2_INDEX]
-         && gray_line_black_level == gray_data[TASK_STOP_LEFT_1_INDEX]
-         && gray_line_black_level == gray_data[TASK_STOP_RIGHT_1_INDEX]
-         && gray_line_black_level == gray_data[TASK_STOP_RIGHT_2_INDEX]);
+    uint8 index = 0;
+    uint8 black_count = 0;
+
+    for(index = 0; index < GRAY_CHANNEL_NUM; index ++)
+    {
+        if(gray_line_black_level == gray_data[index])
+        {
+            black_count ++;
+        }
+    }
+
+    return (black_count >= 3U);
 }
 
 /*
@@ -24,7 +35,8 @@ static uint8 Task_Is_Stop_Line (void)
 void Task_Init (void)
 {
     task_stop_flag = 0;
-
+    task_stop_pending = 0;
+    task_stop_delay_ticks = 0;
 }
 
 /*
@@ -39,10 +51,26 @@ void Task_Update (void)
         return;
     }
 
-    if(Task_Is_Stop_Line())
+    if(!task_stop_pending)
+    {
+        if(Task_Is_Stop_Line())
+        {
+            task_stop_pending = 1;
+            task_stop_delay_ticks = TASK_STOP_DELAY_TICKS;
+        }
+        return;
+    }
+
+    if(task_stop_delay_ticks > 0)
+    {
+        task_stop_delay_ticks --;
+    }
+
+    if(task_stop_delay_ticks == 0)
     {
         task_stop_flag = 1;
         enable_gray_line = false;
         Motor_PID_New_Stop();
+        OLED_Stop_Time();
     }
 }

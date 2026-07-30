@@ -4,13 +4,13 @@ volatile bool enable_gray_line = true;
 uint8 gray_line_black_level = 0;
 uint8 gray_line_found = 0;
 
-float gray_line_weight[GRAY_LINE_WEIGHT_NUM] = {-4.0f, -3.0f, -2.5f, 0.3f, 0.3f, 2.5f, 3.0f, 4.0f};     // 各个通道的权重
-float gray_line_k = 95.0f;
-float gray_line_base_offset = 500.0f;       // 这是PID目标速度
+float gray_line_weight[GRAY_LINE_WEIGHT_NUM] = {-4.0f, -3.0f, -1.8f, 0.2f, 0.2f, 1.8f, 3.0f, 4.0f};     // 各个通道的权重
+float gray_line_k = 65.0f;
+float gray_line_base_offset = 470.0f;       // 这是PID目标速度
 float gray_line_error = 0.0f;
 float gray_line_correct_offset = 0.0f;
-float gray_line_left_target = 500.0f;
-float gray_line_right_target = 500.0f;
+float gray_line_left_target = 470.0f;
+float gray_line_right_target = 470.0f;
 
 /*
 函数功能：返回value的绝对值
