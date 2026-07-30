@@ -1,5 +1,6 @@
 #include "OLED.h"
 #include "Button.h"
+#include "Task4.h"
 
 uint8 mode = OLED_MODE_MIN;
 volatile uint32 oled_elapsed_tenths = 0;
@@ -19,6 +20,7 @@ static void OLED_Timer_Callback (uint32 event, void *ptr)
     (void)ptr;
 
     Button_Scan_10ms();
+    Task4_Tick_10ms();
 
     if(oled_time_running)
     {
@@ -109,6 +111,15 @@ void OLED_Show_Mode (void)
     }
 
     ips200pro_label_printf(ips200pro_mode_label_id, "Mode: %u", (unsigned int)mode);
+}
+
+void OLED_Show_Status (const char *status)
+{
+    if(!ips200pro_ready || NULL == status)
+    {
+        return;
+    }
+    ips200pro_label_printf(ips200pro_status_label_id, "%s", status);
 }
 
 void OLED_Process (void)

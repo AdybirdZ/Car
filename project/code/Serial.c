@@ -181,6 +181,64 @@ uint8 Serial_Parse_Signed_Int (const char *str, int16 *result)
 }
 
 /*
+函数功能：解析K230发送的带符号小数，例如-12.00、0.35、+8.20
+参数说明：str为去掉#和$后的字符串，result保存解析结果
+返回值：1表示格式正确，0表示格式错误
+*/
+uint8 Serial_Parse_Signed_Float (const char *str, float *result)
+{
+    uint16 index = 0;
+    uint8 decimal_count = 0;
+    float value = 0.0f;
+    float decimal_scale = 0.1f;
+    float sign = 1.0f;
+
+    if(NULL == str || NULL == result)
+    {
+        return 0;
+    }
+    if('-' == str[index])
+    {
+        sign = -1.0f;
+        index ++;
+    }
+    else if('+' == str[index])
+    {
+        index ++;
+    }
+    if(str[index] < '0' || str[index] > '9')
+    {
+        return 0;
+    }
+    while(str[index] >= '0' && str[index] <= '9')
+    {
+        value = value * 10.0f + (float)(str[index] - '0');
+        index ++;
+    }
+    if('.' == str[index])
+    {
+        index ++;
+        while(str[index] >= '0' && str[index] <= '9' && decimal_count < 2U)
+        {
+            value += (float)(str[index] - '0') * decimal_scale;
+            decimal_scale *= 0.1f;
+            decimal_count ++;
+            index ++;
+        }
+        if(0U == decimal_count)
+        {
+            return 0;
+        }
+    }
+    if('\0' != str[index])
+    {
+        return 0;
+    }
+    *result = value * sign;
+    return 1;
+}
+
+/*
 函数功能：停止使用K230巡线功能
 参数：无
 */

@@ -50,6 +50,7 @@ void Serial_Send_Byte (uint8 data);
 void Serial_Send_Message (const char *str);
 uint8 Serial_Get_Message (char *buffer, uint16 buffer_size);
 uint8 Serial_Parse_Signed_Int (const char *str, int16 *result);
+uint8 Serial_Parse_Signed_Float (const char *str, float *result);
 void Serial_Clear_Road_Flags (void);
 void Serial_Request_Number_A (void);
 void Serial_Request_Number_B (void);

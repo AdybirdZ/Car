@@ -40,36 +40,71 @@
 
 int main (void)
 {
-    Init();
+    uint8 selected_mode = 0;
 
-    // 等待期间 B1 选择模式；只有 mode=2 时，A30 按下并松开才能启动。
+    Init();
+    Task4_Init();
+
+    // mode=2执行原巡线任务；mode=4先启动K230钢球识别，数据就绪后才接受A30启动。
     while(true)
     {
         Button_Scan_10ms();
         OLED_Process();
 
-        if(Button_Get_Start_Event() && 2U == mode)
+        if(TASK4_MODE_NUMBER == mode)
         {
-            break;
+            Task4_Prepare();
+            Task4_Process();
+        }
+        else
+        {
+            Task4_Cancel_Prepare();
+        }
+
+        if(Button_Get_Start_Event())
+        {
+            if(2U == mode)
+            {
+                selected_mode = 2U;
+                break;
+            }
+            if(TASK4_MODE_NUMBER == mode && Task4_Is_Ready())
+            {
+                selected_mode = TASK4_MODE_NUMBER;
+                break;
+            }
         }
 
         system_delay_ms(BUTTON_SCAN_PERIOD_MS);
     }
 
-    // A30 松开后先蜂鸣 1 秒，再开始计时和巡线。
-    Buzz(1);
-    system_delay_ms(1000);
-    Buzz(0);
-
-    OLED_Start_Time();
-
-    enable_gray_line = true;
-    Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
+    if(2U == selected_mode)
+    {
+        // 原mode=2：A30松开后蜂鸣1秒，再开始计时和巡线。
+        Buzz(1);
+        system_delay_ms(1000);
+        Buzz(0);
+        OLED_Start_Time();
+        enable_gray_line = true;
+        Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
+    }
+    else
+    {
+        OLED_Start_Time();
+        Task4_Start();
+    }
 
     while(true)
     {
-        Gray_Line_Update_Target();
-        Task_Update();
+        if(2U == selected_mode)
+        {
+            Gray_Line_Update_Target();
+            Task_Update();
+        }
+        else
+        {
+            Task4_Process();
+        }
         OLED_Process();
         system_delay_ms(10);
     }

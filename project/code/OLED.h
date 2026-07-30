@@ -18,6 +18,7 @@ void OLED_Start_Time (void);
 void OLED_Stop_Time (void);
 void OLED_Show_Time (void);
 void OLED_Show_Mode (void);
+void OLED_Show_Status (const char *status);
 void OLED_Process (void);
 
 #endif
