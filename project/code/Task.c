@@ -1,6 +1,6 @@
 #include "Task.h"
 
-// 当前任务：车辆经过A点的垂直黑色启停线时停车。
+// 当前任务：车辆经过中间四路全黑的停车线时停车。
 bool enable_task = true;
 uint8 task_stop_flag = 0;
 
@@ -11,10 +11,10 @@ uint8 task_stop_flag = 0;
 */
 static uint8 Task_Is_Stop_Line (void)
 {
-    return (IR_ACTIVE_LEVEL == ir_data[TASK_STOP_LEFT_2_INDEX]
-         && IR_ACTIVE_LEVEL == ir_data[TASK_STOP_LEFT_1_INDEX]
-         && IR_ACTIVE_LEVEL == ir_data[TASK_STOP_RIGHT_1_INDEX]
-         && IR_ACTIVE_LEVEL == ir_data[TASK_STOP_RIGHT_2_INDEX]);
+    return (gray_line_black_level == gray_data[TASK_STOP_LEFT_2_INDEX]
+         && gray_line_black_level == gray_data[TASK_STOP_LEFT_1_INDEX]
+         && gray_line_black_level == gray_data[TASK_STOP_RIGHT_1_INDEX]
+         && gray_line_black_level == gray_data[TASK_STOP_RIGHT_2_INDEX]);
 }
 
 /*
@@ -25,10 +25,6 @@ void Task_Init (void)
 {
     task_stop_flag = 0;
 
-    if(enable_task && enable_ir)
-    {
-        enable_ir_line = true;
-    }
 }
 
 /*
@@ -38,17 +34,15 @@ void Task_Init (void)
 */
 void Task_Update (void)
 {
-    if(!enable_task || !enable_ir || task_stop_flag)
+    if(!enable_task || task_stop_flag)
     {
         return;
     }
 
-    IR_Update();
-
     if(Task_Is_Stop_Line())
     {
         task_stop_flag = 1;
-        enable_ir_line = false;
-        Motor_Stop();
+        enable_gray_line = false;
+        Motor_PID_New_Stop();
     }
 }

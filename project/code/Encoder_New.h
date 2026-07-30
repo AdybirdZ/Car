@@ -2,15 +2,17 @@
 #define _ENCODER_NEW_H_
 
 #include "zf_common_headfile.h"
-#include "Motor_New.h"
+
+#define ENCODER_NEW_LEFT                (0)
+#define ENCODER_NEW_RIGHT               (1)
 
 #define ENCODER_NEW_LEFT_A_PIN          (B6)
 #define ENCODER_NEW_LEFT_B_PIN          (B7)
 #define ENCODER_NEW_RIGHT_A_PIN         (A16)
 #define ENCODER_NEW_RIGHT_B_PIN         (A17)
 
-#define ENCODER_NEW_PULSES_PER_REV      (260.0f)
-#define ENCODER_NEW_WHEEL_DIAMETER_MM   (48.0f)
+#define ENCODER_NEW_PULSES_PER_REV      (455.0f)
+#define ENCODER_NEW_WHEEL_DIAMETER_MM   (50.0f)
 #define ENCODER_NEW_SAMPLE_PERIOD_MS    (10U)
 #define ENCODER_NEW_PI                  (3.1415926f)
 

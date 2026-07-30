@@ -1,11 +1,10 @@
 #ifndef _TASK_H_
 #define _TASK_H_
 
-#include "IR.h"
-#include "IR_Line.h"
-#include "Motor.h"
+#include "Gray_Line.h"
+#include "Motor_PID_New.h"
 
-// IR1到IR8按车体从左至右排列；左2、左1、右1、右2为中间四路。
+// 灰度通道0到7按车体从左至右排列；2、3、4、5为中间四路。
 #define TASK_STOP_LEFT_2_INDEX         (2)
 #define TASK_STOP_LEFT_1_INDEX         (3)
 #define TASK_STOP_RIGHT_1_INDEX        (4)

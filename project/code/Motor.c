@@ -58,14 +58,14 @@ void Set_PWM (float duty, int8 motor)
     {
         if(motor == LEFT_MOTOR)
         {
-            // 左轮由MOTOR2驱动，正占空比对应方向引脚高电平
-            gpio_set_level(MOTOR2_DIR, GPIO_HIGH);
+            // 左轮由 MOTOR2 驱动，正占空比对应方向引脚低电平。
+            gpio_set_level(MOTOR2_DIR, GPIO_LOW);
             pwm_set_duty(MOTOR2_PWM, duty * (PWM_DUTY_MAX / 100));
         }
         else if(motor == RIGHT_MOTOR)
         {
-            // 右轮由MOTOR1驱动，正占空比对应方向引脚高电平
-            gpio_set_level(MOTOR1_DIR, GPIO_HIGH);
+            // 右轮由 MOTOR1 驱动，正占空比对应方向引脚低电平。
+            gpio_set_level(MOTOR1_DIR, GPIO_LOW);
             pwm_set_duty(MOTOR1_PWM, duty * (PWM_DUTY_MAX / 100));
         }
     }
@@ -73,13 +73,13 @@ void Set_PWM (float duty, int8 motor)
     {
         if(motor == LEFT_MOTOR)
         {
-            // 负占空比通过方向引脚低电平实现反转，PWM使用绝对值
-            gpio_set_level(MOTOR2_DIR, GPIO_LOW);
+            // 负占空比通过方向引脚高电平实现反转，PWM 使用绝对值。
+            gpio_set_level(MOTOR2_DIR, GPIO_HIGH);
             pwm_set_duty(MOTOR2_PWM, (-duty) * (PWM_DUTY_MAX / 100));
         }
         else if(motor == RIGHT_MOTOR)
         {
-            gpio_set_level(MOTOR1_DIR, GPIO_LOW);
+            gpio_set_level(MOTOR1_DIR, GPIO_HIGH);
             pwm_set_duty(MOTOR1_PWM, (-duty) * (PWM_DUTY_MAX / 100));
         }
     }

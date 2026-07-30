@@ -185,10 +185,12 @@ void Init (void)
     Init_Module_Done(INIT_MODULE_GRAY, "GRAY_LINE_SENSOR");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
+    Task_Init();
+
     // 旧 Motor/Encoder/Motor_PID 不再初始化，改用 TB6612 和增量编码器新模块。
-    Init_Module_Start(INIT_MODULE_MOTOR, "MOTOR_NEW");
-    Motor_New_Init();
-    Init_Module_Done(INIT_MODULE_MOTOR, "MOTOR_NEW");
+    Init_Module_Start(INIT_MODULE_MOTOR, "MOTOR_SEEKFREE");
+    Motor_Init();
+    Init_Module_Done(INIT_MODULE_MOTOR, "MOTOR_SEEKFREE");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
     Init_Module_Start(INIT_MODULE_ENCODER, "ENCODER_NEW");
@@ -196,9 +198,9 @@ void Init (void)
     Init_Module_Done(INIT_MODULE_ENCODER, "ENCODER_NEW");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
-    Init_Module_Start(INIT_MODULE_MOTOR_PID_NEW, "MOTOR_PID_NEW");
+    Init_Module_Start(INIT_MODULE_MOTOR_PID_NEW, "HALL_SPEED_PID");
     Motor_PID_New_Init();
-    Init_Module_Done(INIT_MODULE_MOTOR_PID_NEW, "MOTOR_PID_NEW");
+    Init_Module_Done(INIT_MODULE_MOTOR_PID_NEW, "HALL_SPEED_PID");
     system_delay_ms(INIT_MODULE_DELAY_MS);
 
     Button_Init();

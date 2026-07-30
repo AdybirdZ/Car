@@ -60,15 +60,14 @@ int main (void)
     Ball_PID_Set(0.0f, 0.0f, 0.0f);             // 调PID改这里就行了
 
 #endif
-    // 双轮速度 PID 测试：左、右轮目标速度均为 300 mm/s。
-    Motor_PID_New_Start(300.0f, 300.0f);
+    // 灰度巡线：以基准速度启动霍尔速度 PID，后续每 10 ms 更新左右轮目标。
+    enable_gray_line = true;
+    Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
 
-    enable_gray_line = false;
-    //gray_line_base_offset = 300.0f;
-    //Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
     while(true)
     {
-        // Gray_Line_Update_Target();
+        Gray_Line_Update_Target();
+        Task_Update();
         OLED_Process();
         system_delay_ms(10);
     }

@@ -5,13 +5,13 @@ volatile bool enable_motor_pid_new = false;
 
 static float Motor_PID_New_Limit (float value)
 {
-    if(value > MOTOR_NEW_DUTY_MAX)
+    if(value > PWM_MAX)
     {
-        value = MOTOR_NEW_DUTY_MAX;
+        value = PWM_MAX;
     }
-    else if(value < -MOTOR_NEW_DUTY_MAX)
+    else if(value < -PWM_MAX)
     {
-        value = -MOTOR_NEW_DUTY_MAX;
+        value = -PWM_MAX;
     }
 
     return value;
@@ -30,7 +30,7 @@ void Motor_PID_New_Init (void)
 
     enable_motor_pid_new = false;
 
-    for(motor = MOTOR_NEW_LEFT; motor <= MOTOR_NEW_RIGHT; motor ++)
+    for(motor = LEFT_MOTOR; motor <= RIGHT_MOTOR; motor ++)
     {
         motor_pid_new[motor].kp = MOTOR_PID_NEW_KP_DEFAULT;
         motor_pid_new[motor].ki = MOTOR_PID_NEW_KI_DEFAULT;
@@ -44,7 +44,7 @@ void Motor_PID_New_Init (void)
 
 void Motor_PID_New_Set (uint8 motor, float kp, float ki, float kd)
 {
-    if(motor > MOTOR_NEW_RIGHT)
+    if(motor > RIGHT_MOTOR)
     {
         return;
     }
@@ -56,7 +56,7 @@ void Motor_PID_New_Set (uint8 motor, float kp, float ki, float kd)
 
 void Motor_PID_New_Set_Target (uint8 motor, float target)
 {
-    if(motor <= MOTOR_NEW_RIGHT)
+    if(motor <= RIGHT_MOTOR)
     {
         motor_pid_new[motor].target = target;
     }
@@ -64,14 +64,14 @@ void Motor_PID_New_Set_Target (uint8 motor, float target)
 
 void Motor_PID_New_Set_Targets (float left_target, float right_target)
 {
-    Motor_PID_New_Set_Target(MOTOR_NEW_LEFT, left_target);
-    Motor_PID_New_Set_Target(MOTOR_NEW_RIGHT, right_target);
+    Motor_PID_New_Set_Target(LEFT_MOTOR, left_target);
+    Motor_PID_New_Set_Target(RIGHT_MOTOR, right_target);
 }
 
 void Motor_PID_New_Start (float left_target, float right_target)
 {
-    Motor_PID_New_Clear(MOTOR_NEW_LEFT);
-    Motor_PID_New_Clear(MOTOR_NEW_RIGHT);
+    Motor_PID_New_Clear(LEFT_MOTOR);
+    Motor_PID_New_Clear(RIGHT_MOTOR);
     Encoder_New_Clear();
     Motor_PID_New_Set_Targets(left_target, right_target);
     enable_motor_pid_new = true;
@@ -80,15 +80,16 @@ void Motor_PID_New_Start (float left_target, float right_target)
 void Motor_PID_New_Stop (void)
 {
     enable_motor_pid_new = false;
-    Motor_PID_New_Clear(MOTOR_NEW_LEFT);
-    Motor_PID_New_Clear(MOTOR_NEW_RIGHT);
+    Motor_PID_New_Clear(LEFT_MOTOR);
+    Motor_PID_New_Clear(RIGHT_MOTOR);
     Encoder_New_Clear();
-    Motor_New_Stop_All();
+    Set_PWM(0.0f, LEFT_MOTOR);
+    Set_PWM(0.0f, RIGHT_MOTOR);
 }
 
 void Motor_PID_New_Clear (uint8 motor)
 {
-    if(motor > MOTOR_NEW_RIGHT)
+    if(motor > RIGHT_MOTOR)
     {
         return;
     }
@@ -105,7 +106,7 @@ float Motor_PID_New_Control (uint8 motor)
     Motor_PID_New_Struct *pid;
     float delta_output;
 
-    if(motor > MOTOR_NEW_RIGHT)
+    if(motor > RIGHT_MOTOR)
     {
         return 0.0f;
     }
@@ -130,7 +131,7 @@ float Motor_PID_New_Control (uint8 motor)
         pid->output = 0.0f;
     }
 
-    Motor_New_Set_Output(motor, (int32)pid->output);
+    Set_PWM(pid->output, (int8)motor);
     return pid->output;
 }
 
@@ -143,6 +144,6 @@ void Motor_PID_New_Process (void)
         return;
     }
 
-    Motor_PID_New_Control(MOTOR_NEW_LEFT);
-    Motor_PID_New_Control(MOTOR_NEW_RIGHT);
+    Motor_PID_New_Control(LEFT_MOTOR);
+    Motor_PID_New_Control(RIGHT_MOTOR);
 }

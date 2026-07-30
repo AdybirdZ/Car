@@ -12,7 +12,7 @@
 #define LEFT_MOTOR               (0)
 #define RIGHT_MOTOR              (1)
 
-#define PWM_MAX                  (25)
+#define PWM_MAX                  (40)
 
 extern bool enable_motor_output;
 extern volatile float motor_pwm_duty[2];
