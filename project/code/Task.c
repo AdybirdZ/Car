@@ -1,5 +1,6 @@
 #include "Task.h"
 #include "OLED.h"
+#include "Light_and_Buzzer.h"
 
 // 当前任务：车辆经过中间四路全黑的停车线时停车。
 bool enable_task = true;
@@ -72,5 +73,7 @@ void Task_Update (void)
         enable_gray_line = false;
         Motor_PID_New_Stop();
         OLED_Stop_Time();
+        // 停车动作完成后开启蜂鸣器；task_stop_flag锁存，避免重复触发。
+        Buzz(1);
     }
 }

@@ -4,8 +4,9 @@ static uint8 mode_button_stable_pressed = 0;
 static uint8 mode_button_debounce_count = 0;
 static uint8 start_button_stable_pressed = 0;
 static uint8 start_button_debounce_count = 0;
+static uint8 start_button_release_armed = 0;
 static volatile uint8 mode_button_press_event_count = 0;
-static volatile uint8 start_button_press_event_count = 0;
+static volatile uint8 start_button_release_event_count = 0;
 
 /*
 函数功能：初始化A30启动按键和B1模式按键输入
@@ -20,8 +21,9 @@ void Button_Init (void)
     mode_button_debounce_count = 0;
     start_button_stable_pressed = 0;
     start_button_debounce_count = 0;
+    start_button_release_armed = 0;
     mode_button_press_event_count = 0;
-    start_button_press_event_count = 0;
+    start_button_release_event_count = 0;
 }
 
 /*
@@ -63,9 +65,17 @@ void Button_Scan_10ms (void)
         {
             start_button_debounce_count = 0;
             start_button_stable_pressed = start_pressed;
-            if(start_pressed && start_button_press_event_count < 255)
+            if(start_pressed)
             {
-                start_button_press_event_count ++;
+                start_button_release_armed = 1;
+            }
+            else if(start_button_release_armed)
+            {
+                start_button_release_armed = 0;
+                if(start_button_release_event_count < 255)
+                {
+                    start_button_release_event_count ++;
+                }
             }
         }
     }
@@ -92,11 +102,11 @@ bool Button_Get_Press_Event (void)
 */
 bool Button_Get_Start_Event (void)
 {
-    if(0 == start_button_press_event_count)
+    if(0 == start_button_release_event_count)
     {
         return false;
     }
 
-    start_button_press_event_count --;
+    start_button_release_event_count --;
     return true;
 }

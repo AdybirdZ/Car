@@ -42,27 +42,28 @@ int main (void)
 {
     Init();
 
-    // 初始化完成后等待A30启动键；等待期间B1仍可选择mode。
-    while(!Button_Get_Start_Event())
+    // 等待期间 B1 选择模式；只有 mode=2 时，A30 按下并松开才能启动。
+    while(true)
     {
         Button_Scan_10ms();
         OLED_Process();
+
+        if(Button_Get_Start_Event() && 2U == mode)
+        {
+            break;
+        }
+
         system_delay_ms(BUTTON_SCAN_PERIOD_MS);
     }
 
-    // 题目要求按键启动时开始计时，后续主程序也从这里开始执行。
+    // A30 松开后先蜂鸣 1 秒，再开始计时和巡线。
+    Buzz(1);
+    system_delay_ms(1000);
+    Buzz(0);
+
     OLED_Start_Time();
 
-#if 0
-    Step_Init();            // 这里的初始化代码以后放到Init里面去
-    Motor_PID_New_Start(300.0f, 300.0f);
-
-    Ball_PID_Set(0.0f, 0.0f, 0.0f);             // 调PID改这里就行了
-
-#endif
-    // 双轮直行测试：保留当前的 PID 参数和基准速度，暂时不执行巡线修正。
     enable_gray_line = true;
-
     Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
 
     while(true)

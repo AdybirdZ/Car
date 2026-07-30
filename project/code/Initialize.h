@@ -26,6 +26,7 @@
 #include "MPU6050.h"
 #include "Euler.h"
 #include "Step.h"
+#include "Step_Encoder.h"
 #include "Button.h"
 #include "OLED.h"
 #include "Ball_PID.h"

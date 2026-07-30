@@ -12,6 +12,6 @@
 void Button_Init (void);
 void Button_Scan_10ms (void);
 bool Button_Get_Press_Event (void);
-bool Button_Get_Start_Event (void);
+bool Button_Get_Start_Event (void);     // A30 完成一次按下并松开后返回 true
 
 #endif

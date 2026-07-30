@@ -1,4 +1,5 @@
 #include "Step.h"
+#include "Step_Encoder.h"
 
 uint32 step_frequency_hz = STEP_DEFAULT_FREQUENCY_HZ;
 uint8 step_direction = STEP_DIRECTION_FORWARD;
@@ -130,6 +131,44 @@ void Step_Stop (void)
 }
 
 /*
+函数功能：精确输出指定数量的STEP上升沿。
+说明：旧代码以“PWM运行时间”推算脉冲数，毫秒取整会导致多脉冲或少脉冲。
+本函数逐个产生脉冲，因此脉冲数量准确；中断只可能带来频率轻微抖动，不会改变步数。
+*/
+void Step_Output_Pulses (uint32 pulse_count, uint32 frequency_hz)
+{
+    uint32 index;
+    uint32 period_us;
+
+    if(0 == pulse_count || 0 == frequency_hz)
+    {
+        return;
+    }
+    period_us = 1000000U / frequency_hz;
+    if(period_us <= STEP_PULSE_WIDTH_US)
+    {
+        return;
+    }
+    if(!step_enabled)
+    {
+        Step_Enable();
+    }
+
+    Step_Stop();
+    gpio_init(STEP_PULSE_GPIO_PIN, GPO, GPIO_LOW, GPO_PUSH_PULL);
+    for(index = 0; index < pulse_count; index++)
+    {
+        gpio_high(STEP_PULSE_GPIO_PIN);
+        system_delay_us(STEP_PULSE_WIDTH_US);
+        gpio_low(STEP_PULSE_GPIO_PIN);
+        system_delay_us(period_us - STEP_PULSE_WIDTH_US);
+    }
+    pwm_init(STEP_PWM_PIN, frequency_hz, 0);
+    step_frequency_hz = frequency_hz;
+    step_running = false;
+}
+
+/*
 函数功能：让步进电机转动指定角度，计算目标脉冲数，再根据脉冲频率计算运行时间，函数结束时电机仍保持当前位置，阻塞式函数
 参数说明：
 angle：目标角度，正数使用正转方向，负数使用反转方向
@@ -140,7 +179,6 @@ void Step_Move_Angle (float angle, uint32 frequency_hz)         // 正数为逆�
     float angle_abs = angle;
     float moved_angle;
     uint32 pulse_count;
-    uint32 move_time_ms;
 
     if(angle == 0.0f || frequency_hz == 0)
     {
@@ -164,14 +202,7 @@ void Step_Move_Angle (float angle, uint32 frequency_hz)         // 正数为逆�
         return;
     }
 
-    Step_Set_Frequency(frequency_hz);
-
-    // 运行时间 = 脉冲数 / 脉冲频率，向上取整以确保完成目标脉冲数
-    move_time_ms = (pulse_count * 1000 + frequency_hz - 1) / frequency_hz;
-
-    Step_Start();
-    system_delay_ms(move_time_ms);
-    Step_Stop();
+    Step_Output_Pulses(pulse_count, frequency_hz);
 
     // 按实际换算出的整数脉冲数更新软件位置，减小连续绝对定位时的累计误差。
     moved_angle = (float)pulse_count * 360.0f / (STEP_MOTOR_FULL_STEPS * STEP_MOTOR_MICROSTEP);
@@ -179,22 +210,14 @@ void Step_Move_Angle (float angle, uint32 frequency_hz)         // 正数为逆�
 }
 
 /*
-函数功能：让步进电机以指定脉冲频率转到指定的绝对角度
+函数功能：让步进电机以指定脉冲频率转到指定的反馈相对角度
 参数说明：
-angle：目标绝对角度，Step_Init后初始角度定义为0度
+angle：目标相对角度，Step_Encoder完成上电定位后当前位置定义为0度
 frequency_hz：STEP脉冲频率，单位Hz，数值越大转动越快
-说明：函数根据“目标角度-当前软件记录角度”得到本次相对转角，完成后保持当前位置。
-步进电机没有绝对位置反馈，断电、堵转或丢步后软件角度与真实角度会产生偏差。
+说明：函数每发出一小段精确脉冲都会读取A/B编码器反馈；堵转、无反馈、方向错误
+或超时会停止输出，避免原开环代码在失步后继续向错误位置运行。
 */
 void Step_To_Angle (float angle, uint32 frequency_hz)
 {
-    float move_angle;
-
-    if(0 == frequency_hz)
-    {
-        return;
-    }
-
-    move_angle = angle - step_current_angle;
-    Step_Move_Angle(move_angle, frequency_hz);
+    (void)Step_Encoder_Move_To_Relative_Angle(angle, frequency_hz);
 }

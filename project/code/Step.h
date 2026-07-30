@@ -5,6 +5,7 @@
 
 // D36A第一路控制接口：ST1->B10，DIR1->B11，EN1->B2，且控制板与驱动板必须共地
 #define STEP_PWM_PIN                  (PWM_TIM_G6_CH0_B10)
+#define STEP_PULSE_GPIO_PIN           (B10)
 #define STEP_DIR_PIN                  (B11)
 #define STEP_EN_PIN                   (B2)
 
@@ -33,6 +34,7 @@ void Step_Disable (void);
 void Step_Start (void);
 void Step_Stop (void);
 uint32 Step_Get_PWM_Duty (uint32 frequency_hz);
+void Step_Output_Pulses (uint32 pulse_count, uint32 frequency_hz);
 
 // 按带符号角度转动，函数返回后停止脉冲但继续保持电机使能
 void Step_Move_Angle (float angle, uint32 frequency_hz);

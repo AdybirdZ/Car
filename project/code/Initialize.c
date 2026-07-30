@@ -207,6 +207,11 @@ void Init (void)
     OLED_Init();
 
     interrupt_global_enable(0);         // 开启中断
+    Step_Init();
+    if(Step_Encoder_Init())
+    {
+        (void)Step_Encoder_Goto_Startup_Angle();
+    }
     init_current_module = 0;
     printf("[INIT] ALL DONE\r\n");
 }
