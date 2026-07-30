@@ -204,6 +204,27 @@ float Step_Encoder_Get_Relative_Angle (void)
     return (float)count * 360.0f / STEP_ENCODER_COUNTS_PER_REV;
 }
 
+/*
+函数功能：将上电定位后的相对目标角度换算为机械绝对目标角度
+参数说明：relative_angle为Step_To_Angle使用的相对角度
+返回值：0.0~360.0度范围内的机械绝对目标角度
+说明：本函数只计算目标值；实时实测值仍应使用Step_Encoder_Read_Absolute_Angle读取。
+*/
+float Step_Encoder_Relative_To_Absolute_Angle (float relative_angle)
+{
+    float absolute_angle = STEP_ENCODER_STARTUP_TARGET_ANGLE + relative_angle;
+
+    while(absolute_angle >= 360.0f)
+    {
+        absolute_angle -= 360.0f;
+    }
+    while(absolute_angle < 0.0f)
+    {
+        absolute_angle += 360.0f;
+    }
+    return absolute_angle;
+}
+
 void Step_Encoder_Set_Zero (void)
 {
     uint32 key = __get_PRIMASK();

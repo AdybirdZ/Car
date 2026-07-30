@@ -16,7 +16,7 @@
 #define STEP_PULSE_WIDTH_US           (5)                   // D36A官方例程中提到，使用约5us的高电平脉冲
 #define STEP_PWM_DUTY_MIN             (1)                   // 低频时至少保留一个PWM计数单位
 
-// 步进电机和驱动板参数：常见两相步进电机为200整步/圈，D36A默认设置为16细分
+// 步进电机和驱动板参数：200整步一圈，D36A默认设置为16细分
 #define STEP_MOTOR_FULL_STEPS         (200)
 #define STEP_MOTOR_MICROSTEP          (16)
 

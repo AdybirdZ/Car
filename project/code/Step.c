@@ -17,7 +17,7 @@ uint32 Step_Get_PWM_Duty (uint32 frequency_hz)
     uint64 duty_value;
 
     duty_value = (uint64)frequency_hz * STEP_PULSE_WIDTH_US * PWM_DUTY_MAX;
-    duty_value = (duty_value + 999999U) / 1000000U;
+    duty_value = (duty_value + 999999) / 1000000;
 
     if(duty_value < STEP_PWM_DUTY_MIN)
     {

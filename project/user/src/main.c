@@ -43,29 +43,59 @@ int main (void)
     uint8 selected_mode = 0;
 
     Init();
+    Task1_Init();
+    Task3_Init();
     Task4_Init();
 
-    // mode=2执行原巡线任务；mode=4先启动K230钢球识别，数据就绪后才接受A30启动。
+    // mode=1静止平衡；mode=2巡线；mode=3钢球往返；mode=4钢球平衡巡线。
     while(true)
     {
         Button_Scan_10ms();
         OLED_Process();
 
-        if(TASK4_MODE_NUMBER == mode)
+        if(TASK1_MODE_NUMBER == mode)
         {
+            Task3_Cancel_Prepare();
+            Task4_Cancel_Prepare();
+            Task1_Prepare();
+            Task1();
+        }
+        else if(TASK3_MODE_NUMBER == mode)
+        {
+            Task1_Cancel_Prepare();
+            Task4_Cancel_Prepare();
+            Task3_Prepare();
+            Task3();
+        }
+        else if(TASK4_MODE_NUMBER == mode)
+        {
+            Task1_Cancel_Prepare();
+            Task3_Cancel_Prepare();
             Task4_Prepare();
-            Task4_Process();
+            Task4();
         }
         else
         {
+            Task1_Cancel_Prepare();
+            Task3_Cancel_Prepare();
             Task4_Cancel_Prepare();
         }
 
         if(Button_Get_Start_Event())
         {
+            if(TASK1_MODE_NUMBER == mode && Task1_Is_Ready())
+            {
+                selected_mode = TASK1_MODE_NUMBER;
+                break;
+            }
             if(2U == mode)
             {
                 selected_mode = 2U;
+                break;
+            }
+            if(TASK3_MODE_NUMBER == mode && Task3_Is_Ready())
+            {
+                selected_mode = TASK3_MODE_NUMBER;
                 break;
             }
             if(TASK4_MODE_NUMBER == mode && Task4_Is_Ready())
@@ -78,7 +108,14 @@ int main (void)
         system_delay_ms(BUTTON_SCAN_PERIOD_MS);
     }
 
-    if(2U == selected_mode)
+    if(TASK1_MODE_NUMBER == selected_mode)
+    {
+        Buzz(1);
+        system_delay_ms(1000);
+        Buzz(0);
+        Task1_Start();
+    }
+    else if(2U == selected_mode)
     {
         // 原mode=2：A30松开后蜂鸣1秒，再开始计时和巡线。
         Buzz(1);
@@ -88,22 +125,39 @@ int main (void)
         enable_gray_line = true;
         Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
     }
+    else if(TASK3_MODE_NUMBER == selected_mode)
+    {
+        Buzz(1);
+        system_delay_ms(1000);
+        Buzz(0);
+        Task3_Start();
+    }
     else
     {
-        OLED_Start_Time();
+        Buzz(1);
+        system_delay_ms(1000);
+        Buzz(0);
         Task4_Start();
     }
 
     while(true)
     {
-        if(2U == selected_mode)
+        if(TASK1_MODE_NUMBER == selected_mode)
+        {
+            Task1();
+        }
+        else if(2U == selected_mode)
         {
             Gray_Line_Update_Target();
             Task_Update();
         }
+        else if(TASK3_MODE_NUMBER == selected_mode)
+        {
+            Task3();
+        }
         else
         {
-            Task4_Process();
+            Task4();
         }
         OLED_Process();
         system_delay_ms(10);
