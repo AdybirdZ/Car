@@ -26,6 +26,12 @@ static uint8 task1_speed_valid = 0;
 static volatile Task3_State task3_state = TASK3_IDLE;
 static volatile float task3_ball_position_cm = 0.0f;
 static volatile float task3_step_target_angle = 0.0f;
+static float task3_hold_base_relative_angle = 0.0f;
+static float task3_speed_cm_per_s = 0.0f;
+static float task3_last_speed_position_cm = 0.0f;
+static uint32 task3_last_speed_time_tenths = 0;
+static uint8 task3_speed_valid = 0;
+static uint8 task3_negative_brake_done = 0;
 volatile float task3_absolute_target_angle = STEP_ENCODER_STARTUP_TARGET_ANGLE;
 
 /*
@@ -122,34 +128,43 @@ static float Task_Abs (float value)
 }
 
 // 每0.1秒用K230的新位置更新一次速度，避免串口帧率变化影响速度单位。
-static void Task1_Update_Speed (float position)
+static void Task_Update_Ball_Speed (float position,
+                                    float *speed,
+                                    float *last_position,
+                                    uint32 *last_time_tenths,
+                                    uint8 *valid)
 {
     uint32 current_time_tenths = oled_elapsed_tenths;
     float elapsed_s;
 
-    if(!task1_speed_valid)
-    {
-        task1_last_speed_position_cm = position;
-        task1_last_speed_time_tenths = current_time_tenths;
-        task1_speed_cm_per_s = 0.0f;
-        task1_speed_valid = 1;
-        return;
-    }
-
-    if(current_time_tenths == task1_last_speed_time_tenths)
+    if(NULL == speed || NULL == last_position || NULL == last_time_tenths || NULL == valid)
     {
         return;
     }
 
-    elapsed_s = (float)(current_time_tenths - task1_last_speed_time_tenths)
+    if(!*valid)
+    {
+        *last_position = position;
+        *last_time_tenths = current_time_tenths;
+        *speed = 0.0f;
+        *valid = 1;
+        return;
+    }
+
+    if(current_time_tenths == *last_time_tenths)
+    {
+        return;
+    }
+
+    elapsed_s = (float)(current_time_tenths - *last_time_tenths)
               * TASK1_SAMPLE_PERIOD_S;
     if(elapsed_s > 0.0f)
     {
-        task1_speed_cm_per_s = (position - task1_last_speed_position_cm) / elapsed_s;
+        *speed = (position - *last_position) / elapsed_s;
     }
 
-    task1_last_speed_position_cm = position;
-    task1_last_speed_time_tenths = current_time_tenths;
+    *last_position = position;
+    *last_time_tenths = current_time_tenths;
 }
 
 void Task1_Init (void)
@@ -221,7 +236,8 @@ void Task1_Start (void)
 */
 float Task_Calculate_Absolute_Target_Angle (float target_position_cm)
 {
-    float relative_target_angle = -target_position_cm * TASK3_BALL_ANGLE_PER_CM;
+    float relative_target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
+                                + target_position_cm * TASK3_BASE_ANGLE_PER_CM;
 
     return Step_Encoder_Relative_To_Absolute_Angle(relative_target_angle);
 }
@@ -247,7 +263,11 @@ void Task1 (void)
     }
     else if(TASK4_RUNNING == task1_state)
     {
-        Task1_Update_Speed(task1_ball_position_cm);
+        Task_Update_Ball_Speed(task1_ball_position_cm,
+                               &task1_speed_cm_per_s,
+                               &task1_last_speed_position_cm,
+                               &task1_last_speed_time_tenths,
+                               &task1_speed_valid);
         normal_target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
                             - task1_ball_position_cm * TASK1_BALL_ANGLE_PER_CM;
 
@@ -285,6 +305,10 @@ void Task3_Init (void)
     task3_state = TASK3_IDLE;
     task3_ball_position_cm = 0.0f;
     task3_step_target_angle = 0.0f;
+    task3_hold_base_relative_angle = 0.0f;
+    task3_speed_cm_per_s = 0.0f;
+    task3_speed_valid = 0;
+    task3_negative_brake_done = 0;
     task3_absolute_target_angle = STEP_ENCODER_STARTUP_TARGET_ANGLE;
 }
 
@@ -332,6 +356,9 @@ void Task3_Start (void)
     enable_gray_line = false;
     Motor_PID_New_Stop();
     task3_step_target_angle = TASK3_TO_POSITIVE_ANGLE;
+    task3_speed_cm_per_s = 0.0f;
+    task3_speed_valid = 0;
+    task3_negative_brake_done = 0;
     Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
     task3_state = TASK3_MOVE_TO_POSITIVE;
     OLED_Start_Time();
@@ -358,10 +385,21 @@ void Task3 (void)
         return;
     }
 
+    if(TASK3_MOVE_TO_POSITIVE == task3_state
+    || TASK3_MOVE_TO_NEGATIVE == task3_state
+    || TASK3_HOLD_NEGATIVE == task3_state)
+    {
+        Task_Update_Ball_Speed(task3_ball_position_cm,
+                               &task3_speed_cm_per_s,
+                               &task3_last_speed_position_cm,
+                               &task3_last_speed_time_tenths,
+                               &task3_speed_valid);
+    }
+
     if(TASK3_MOVE_TO_POSITIVE == task3_state)
     {
         if(task3_ball_position_cm
-        >= (TASK3_POSITIVE_POSITION_CM - TASK3_POSITION_TOLERANCE_CM))
+        >= TASK3_POSITIVE_REVERSE_POSITION_CM)
         {
             task3_step_target_angle = TASK3_TO_NEGATIVE_ANGLE;
             Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
@@ -373,14 +411,28 @@ void Task3 (void)
 
     if(TASK3_MOVE_TO_NEGATIVE == task3_state)
     {
+        if(!task3_negative_brake_done
+        && task3_ball_position_cm <= TASK3_NEGATIVE_BRAKE_POSITION_CM)
+        {
+            // 钢球仍向负方向运动，因此先固定转到+20度急刹，再转到-5cm对应的目标角度。
+            task3_negative_brake_done = 1;
+            Step_To_Angle(TASK3_NEGATIVE_BRAKE_ANGLE, TASK3_BRAKE_FREQUENCY_HZ);
+            Step_To_Angle(TASK3_NEGATIVE_TARGET_ANGLE, TASK3_BRAKE_FREQUENCY_HZ);
+        }
+
         if(task3_ball_position_cm
         <= (TASK3_NEGATIVE_POSITION_CM + TASK3_POSITION_TOLERANCE_CM))
         {
             // -5cm的固定绝对基准角只在进入最终稳定阶段时计算一次。
             task3_absolute_target_angle =
                 Task_Calculate_Absolute_Target_Angle(TASK3_NEGATIVE_POSITION_CM);
-            task3_step_target_angle =
-                -TASK3_NEGATIVE_POSITION_CM * TASK3_BALL_ANGLE_PER_CM;
+            task3_hold_base_relative_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
+                                            + TASK3_NEGATIVE_POSITION_CM
+                                            * TASK3_BASE_ANGLE_PER_CM;
+            position_error = task3_ball_position_cm - TASK3_NEGATIVE_POSITION_CM;
+            task3_step_target_angle = task3_hold_base_relative_angle
+                                    - position_error * TASK3_HOLD_ANGLE_PER_CM;
+
             Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
             task3_state = TASK3_HOLD_NEGATIVE;
             OLED_Show_Status("HOLD -5CM");
@@ -390,11 +442,10 @@ void Task3 (void)
 
     if(TASK3_HOLD_NEGATIVE == task3_state)
     {
-        final_relative_angle =
-            -TASK3_NEGATIVE_POSITION_CM * TASK3_BALL_ANGLE_PER_CM;
+        final_relative_angle = task3_hold_base_relative_angle;
         position_error = task3_ball_position_cm - TASK3_NEGATIVE_POSITION_CM;
         task3_step_target_angle = final_relative_angle
-                                + position_error * TASK3_BALL_ANGLE_PER_CM;
+                                - position_error * TASK3_HOLD_ANGLE_PER_CM;
         Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
     }
 }

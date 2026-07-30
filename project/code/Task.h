@@ -30,10 +30,16 @@
 #define TASK3_POSITIVE_POSITION_CM      (5.0f)
 #define TASK3_NEGATIVE_POSITION_CM      (-5.0f)
 #define TASK3_POSITION_TOLERANCE_CM     (1.0f)
-#define TASK3_TO_POSITIVE_ANGLE         (-5.0f)   // 编码器角度减小，使钢球向正方向加速
-#define TASK3_TO_NEGATIVE_ANGLE         (5.0f)    // 编码器角度增大，使钢球向负方向加速
+#define TASK3_POSITIVE_REVERSE_POSITION_CM (3.0f)  // 到达此位置后由正向运动切换为负向运动
+#define TASK3_TO_POSITIVE_ANGLE         (10.0f)    // 实测正角度使钢球向正半轴运动
+#define TASK3_TO_NEGATIVE_ANGLE         (-6.0f)   // 实测负角度使钢球向负半轴运动
 #define TASK3_MOVE_FREQUENCY_HZ         (500U)
-#define TASK3_BALL_ANGLE_PER_CM         (1.0f)
+#define TASK3_BASE_ANGLE_PER_CM         (1.0f)     // 水管弯曲对应的静态位置基准
+#define TASK3_HOLD_ANGLE_PER_CM         (TASK1_BALL_ANGLE_PER_CM)
+#define TASK3_NEGATIVE_TARGET_ANGLE     (TASK1_ZERO_TARGET_OFFSET_ANGLE + TASK3_NEGATIVE_POSITION_CM * TASK3_BASE_ANGLE_PER_CM)
+#define TASK3_NEGATIVE_BRAKE_POSITION_CM (-2.0f)   // 前往-5cm途中提前急刹的位置
+#define TASK3_NEGATIVE_BRAKE_ANGLE       (30.0f)   // 到达急刹点时的固定相对目标角度
+#define TASK3_BRAKE_FREQUENCY_HZ        (3000U)
 
 // mode=4钢球平衡巡线测试参数。
 #define TASK4_MODE_NUMBER               (4U)
