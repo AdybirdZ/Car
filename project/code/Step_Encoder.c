@@ -6,9 +6,70 @@ volatile int32 step_encoder_zero_count = 0;
 volatile uint32 step_encoder_z_count = 0;
 volatile float step_encoder_initial_absolute_angle = 0.0f;
 volatile uint8 step_encoder_initial_absolute_valid = 0;
+float step_encoder_startup_target_angle = STEP_ENCODER_DEFAULT_STARTUP_TARGET_ANGLE;
+
+#define STEP_ENCODER_CONFIG_FLASH_SECTOR      (5U)
+#define STEP_ENCODER_CONFIG_FLASH_PAGE        (1U)
+#define STEP_ENCODER_CONFIG_MAGIC             (0x53544550UL)
+
+typedef union
+{
+    float float_value;
+    uint32 uint32_value;
+} Step_Encoder_Flash_Value;
 
 static volatile uint8 step_encoder_last_state = 0;
 static Step_Encoder_Status step_encoder_status = STEP_ENCODER_PWM_ERROR;
+
+static void Step_Encoder_Load_Startup_Target_Angle (void)
+{
+    uint32 data[3];
+    Step_Encoder_Flash_Value angle_data;
+
+    step_encoder_startup_target_angle = STEP_ENCODER_DEFAULT_STARTUP_TARGET_ANGLE;
+    flash_read_page(STEP_ENCODER_CONFIG_FLASH_SECTOR,
+                    STEP_ENCODER_CONFIG_FLASH_PAGE,
+                    data,
+                    3U);
+    angle_data.uint32_value = data[1];
+    if(data[0] == STEP_ENCODER_CONFIG_MAGIC
+    && data[2] == (STEP_ENCODER_CONFIG_MAGIC ^ data[1])
+    && angle_data.float_value >= 0.0f
+    && angle_data.float_value < 360.0f)
+    {
+        step_encoder_startup_target_angle = angle_data.float_value;
+    }
+}
+
+float Step_Encoder_Get_Startup_Target_Angle (void)
+{
+    return step_encoder_startup_target_angle;
+}
+
+uint8 Step_Encoder_Set_Startup_Target_Angle (float angle)
+{
+    if(angle < 0.0f || angle >= 360.0f)
+    {
+        return 0;
+    }
+    step_encoder_startup_target_angle = angle;
+    return 1;
+}
+
+uint8 Step_Encoder_Save_Startup_Target_Angle (void)
+{
+    uint32 data[3];
+    Step_Encoder_Flash_Value angle_data;
+
+    angle_data.float_value = step_encoder_startup_target_angle;
+    data[0] = STEP_ENCODER_CONFIG_MAGIC;
+    data[1] = angle_data.uint32_value;
+    data[2] = STEP_ENCODER_CONFIG_MAGIC ^ data[1];
+    return (0U == flash_write_page(STEP_ENCODER_CONFIG_FLASH_SECTOR,
+                                   STEP_ENCODER_CONFIG_FLASH_PAGE,
+                                   data,
+                                   3U)) ? 1U : 0U;
+}
 
 // A/B四倍频状态表
 static void Step_Encoder_AB_Callback (uint32 event, void *ptr)
@@ -150,6 +211,24 @@ uint8 Step_Encoder_Read_Absolute_Angle (float *angle)
     return 1;
 }
 
+/*
+函数功能：检查步进电机当前绝对角度是否超过初始化目标角度的正方向安全上限
+返回值：1表示超过上限，0表示未超过或本次绝对角度读取失败
+说明：直接按绝对角度数值比较，仅检查“当前角度 > 初始化角度 + 20度”的异常情况。
+*/
+uint8 Step_Encoder_Is_Above_Prestart_Limit (void)
+{
+    float current_angle;
+
+    if(!Step_Encoder_Read_Absolute_Angle(&current_angle))
+    {
+        return 0;
+    }
+
+    return (current_angle > (step_encoder_startup_target_angle
+                           + STEP_ENCODER_PRESTART_MAX_POSITIVE_OFFSET_DEG)) ? 1U : 0U;
+}
+
 static float Step_Encoder_Shortest_Angle_Error (float target, float actual)
 {
     float error = target - actual;
@@ -162,6 +241,7 @@ uint8 Step_Encoder_Init (void)
 {
     float initial_angle;
 
+    Step_Encoder_Load_Startup_Target_Angle();
     gpio_init(STEP_ENCODER_PWM_PIN, GPI, GPIO_LOW, GPI_PULL_DOWN);
     step_encoder_count = 0;
     step_encoder_zero_count = 0;
@@ -212,7 +292,7 @@ float Step_Encoder_Get_Relative_Angle (void)
 */
 float Step_Encoder_Relative_To_Absolute_Angle (float relative_angle)
 {
-    float absolute_angle = STEP_ENCODER_STARTUP_TARGET_ANGLE + relative_angle;
+    float absolute_angle = step_encoder_startup_target_angle + relative_angle;
 
     while(absolute_angle >= 360.0f)
     {
@@ -333,7 +413,7 @@ Step_Encoder_Status Step_Encoder_Goto_Startup_Angle (void)
     // 同时自动判断DIR正转究竟使绝对角度增加还是减小。
     for(cycle = 0; cycle < STEP_ENCODER_STARTUP_MAX_CYCLES; cycle++)
     {
-        error = Step_Encoder_Shortest_Angle_Error(STEP_ENCODER_STARTUP_TARGET_ANGLE,
+        error = Step_Encoder_Shortest_Angle_Error(step_encoder_startup_target_angle,
                                                   current_angle);
         if(error <= STEP_ENCODER_STARTUP_TOLERANCE_DEG
         && error >= -STEP_ENCODER_STARTUP_TOLERANCE_DEG)

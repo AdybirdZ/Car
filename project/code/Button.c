@@ -5,8 +5,14 @@ static uint8 mode_button_debounce_count = 0;
 static uint8 start_button_stable_pressed = 0;
 static uint8 start_button_debounce_count = 0;
 static uint8 start_button_release_armed = 0;
+static uint8 angle_increase_stable_pressed = 0;
+static uint8 angle_increase_debounce_count = 0;
+static uint8 angle_decrease_stable_pressed = 0;
+static uint8 angle_decrease_debounce_count = 0;
 static volatile uint8 mode_button_press_event_count = 0;
 static volatile uint8 start_button_release_event_count = 0;
+static volatile uint8 angle_increase_event_count = 0;
+static volatile uint8 angle_decrease_event_count = 0;
 
 /*
 函数功能：初始化A30启动按键和B1模式按键输入
@@ -17,6 +23,8 @@ void Button_Init (void)
 {
     gpio_init(BUTTON_START_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
     gpio_init(BUTTON_MODE_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
+    gpio_init(BUTTON_ANGLE_INCREASE_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
+    gpio_init(BUTTON_ANGLE_DECREASE_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
     mode_button_stable_pressed = 0;
     mode_button_debounce_count = 0;
     start_button_stable_pressed = 0;
@@ -24,6 +32,12 @@ void Button_Init (void)
     start_button_release_armed = 0;
     mode_button_press_event_count = 0;
     start_button_release_event_count = 0;
+    angle_increase_stable_pressed = 0;
+    angle_increase_debounce_count = 0;
+    angle_decrease_stable_pressed = 0;
+    angle_decrease_debounce_count = 0;
+    angle_increase_event_count = 0;
+    angle_decrease_event_count = 0;
 }
 
 /*
@@ -35,6 +49,8 @@ void Button_Scan_10ms (void)
 {
     uint8 mode_pressed = (GPIO_LOW == gpio_get_level(BUTTON_MODE_PIN)) ? 1 : 0;
     uint8 start_pressed = (GPIO_LOW == gpio_get_level(BUTTON_START_PIN)) ? 1 : 0;
+    uint8 angle_increase_pressed = (GPIO_LOW == gpio_get_level(BUTTON_ANGLE_INCREASE_PIN)) ? 1 : 0;
+    uint8 angle_decrease_pressed = (GPIO_LOW == gpio_get_level(BUTTON_ANGLE_DECREASE_PIN)) ? 1 : 0;
 
     if(mode_pressed == mode_button_stable_pressed)
     {
@@ -80,6 +96,34 @@ void Button_Scan_10ms (void)
         }
     }
 
+    if(angle_increase_pressed == angle_increase_stable_pressed)
+    {
+        angle_increase_debounce_count = 0;
+    }
+    else if(++angle_increase_debounce_count >= BUTTON_DEBOUNCE_COUNT)
+    {
+        angle_increase_debounce_count = 0;
+        angle_increase_stable_pressed = angle_increase_pressed;
+        if(angle_increase_pressed && angle_increase_event_count < 255U)
+        {
+            angle_increase_event_count ++;
+        }
+    }
+
+    if(angle_decrease_pressed == angle_decrease_stable_pressed)
+    {
+        angle_decrease_debounce_count = 0;
+    }
+    else if(++angle_decrease_debounce_count >= BUTTON_DEBOUNCE_COUNT)
+    {
+        angle_decrease_debounce_count = 0;
+        angle_decrease_stable_pressed = angle_decrease_pressed;
+        if(angle_decrease_pressed && angle_decrease_event_count < 255U)
+        {
+            angle_decrease_event_count ++;
+        }
+    }
+
 }
 
 /*
@@ -109,5 +153,19 @@ bool Button_Get_Start_Event (void)
     }
 
     start_button_release_event_count --;
+    return true;
+}
+
+bool Button_Get_Angle_Increase_Event (void)
+{
+    if(0U == angle_increase_event_count) return false;
+    angle_increase_event_count --;
+    return true;
+}
+
+bool Button_Get_Angle_Decrease_Event (void)
+{
+    if(0U == angle_decrease_event_count) return false;
+    angle_decrease_event_count --;
     return true;
 }

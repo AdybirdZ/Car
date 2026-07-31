@@ -25,13 +25,15 @@ static uint8 task1_speed_valid = 0;
 static volatile Task3_State task3_state = TASK3_IDLE;
 static volatile float task3_ball_position_cm = 0.0f;
 static volatile float task3_step_target_angle = 0.0f;
-static float task3_hold_base_relative_angle = 0.0f;
 static float task3_speed_cm_per_s = 0.0f;
 static float task3_last_speed_position_cm = 0.0f;
 static uint32 task3_last_speed_time_tenths = 0;
 static uint8 task3_speed_valid = 0;
 static uint8 task3_negative_brake_done = 0;
-volatile float task3_absolute_target_angle = STEP_ENCODER_STARTUP_TARGET_ANGLE;
+static uint8 task3_stable_timer_active = 0;
+static uint32 task3_stable_start_time_tenths = 0;
+static uint8 task6_active = 0;
+volatile float task3_absolute_target_angle = STEP_ENCODER_DEFAULT_STARTUP_TARGET_ANGLE;
 
 /*
 函数功能：检测A点启停线
@@ -326,11 +328,12 @@ void Task3_Init (void)
     task3_state = TASK3_IDLE;
     task3_ball_position_cm = 0.0f;
     task3_step_target_angle = 0.0f;
-    task3_hold_base_relative_angle = 0.0f;
     task3_speed_cm_per_s = 0.0f;
     task3_speed_valid = 0;
     task3_negative_brake_done = 0;
-    task3_absolute_target_angle = STEP_ENCODER_STARTUP_TARGET_ANGLE;
+    task3_stable_timer_active = 0;
+    task3_stable_start_time_tenths = 0;
+    task3_absolute_target_angle = Step_Encoder_Get_Startup_Target_Angle();
 }
 
 // mode切换到3时启动K230，收到第一帧合法位置后才允许A30启动。
@@ -380,6 +383,8 @@ void Task3_Start (void)
     task3_speed_cm_per_s = 0.0f;
     task3_speed_valid = 0;
     task3_negative_brake_done = 0;
+    task3_stable_timer_active = 0;
+    task3_stable_start_time_tenths = 0;
     Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
     task3_state = TASK3_MOVE_TO_POSITIVE;
     OLED_Start_Time();
@@ -390,8 +395,6 @@ void Task3_Start (void)
 void Task3 (void)
 {
     float position;
-    float final_relative_angle;
-    float position_error;
 
     if(!Task_Read_Ball_Position(&position))
     {
@@ -435,26 +438,19 @@ void Task3 (void)
         if(!task3_negative_brake_done
         && task3_ball_position_cm <= TASK3_NEGATIVE_BRAKE_POSITION_CM)
         {
-            // 钢球仍向负方向运动，因此先固定转到+20度急刹，再转到-5cm对应的目标角度。
+            // 钢球仍向负方向运动，因此先固定转到急刹角，再切换到-5cm的位置-速度控制。
             task3_negative_brake_done = 1;
-            Step_To_Angle(TASK3_NEGATIVE_BRAKE_ANGLE, TASK3_BRAKE_FREQUENCY_HZ);
-            Step_To_Angle(TASK3_NEGATIVE_TARGET_ANGLE, TASK3_BRAKE_FREQUENCY_HZ);
-        }
-
-        if(task3_ball_position_cm
-        <= (TASK3_NEGATIVE_POSITION_CM + TASK3_POSITION_TOLERANCE_CM))
-        {
-            // -5cm的固定绝对基准角只在进入最终稳定阶段时计算一次。
             task3_absolute_target_angle =
-                Task_Calculate_Absolute_Target_Angle(TASK3_NEGATIVE_POSITION_CM);
-            task3_hold_base_relative_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
-                                            + TASK3_NEGATIVE_POSITION_CM
-                                            * TASK3_BASE_ANGLE_PER_CM;
-            position_error = task3_ball_position_cm - TASK3_NEGATIVE_POSITION_CM;
-            task3_step_target_angle = task3_hold_base_relative_angle
-                                    - position_error * TASK3_HOLD_ANGLE_PER_CM;
-
-            Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
+                Step_Encoder_Relative_To_Absolute_Angle(
+                    TASK3_NEGATIVE_HOLD_BASE_ANGLE);
+            Step_To_Angle(TASK3_NEGATIVE_BRAKE_ANGLE, TASK3_BRAKE_FREQUENCY_HZ);
+            task3_step_target_angle = Task_Calculate_Velocity_Control_Angle(
+                                          TASK3_NEGATIVE_POSITION_CM,
+                                          task3_ball_position_cm,
+                                          task3_speed_cm_per_s)
+                                    + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET;
+            Step_To_Angle(task3_step_target_angle, TASK3_BRAKE_FREQUENCY_HZ);
+            task3_stable_timer_active = 0;
             task3_state = TASK3_HOLD_NEGATIVE;
             OLED_Show_Status("HOLD -5CM");
         }
@@ -463,11 +459,34 @@ void Task3 (void)
 
     if(TASK3_HOLD_NEGATIVE == task3_state)
     {
-        final_relative_angle = task3_hold_base_relative_angle;
-        position_error = task3_ball_position_cm - TASK3_NEGATIVE_POSITION_CM;
-        task3_step_target_angle = final_relative_angle
-                                - position_error * TASK3_HOLD_ANGLE_PER_CM;
-        Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
+        task3_step_target_angle = Task_Calculate_Velocity_Control_Angle(
+                                      TASK3_NEGATIVE_POSITION_CM,
+                                      task3_ball_position_cm,
+                                      task3_speed_cm_per_s)
+                                + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET;
+        Step_To_Angle(task3_step_target_angle, TASK1_STEP_FREQUENCY_HZ);
+
+        if(task3_ball_position_cm >= TASK3_STABLE_MIN_POSITION_CM
+        && task3_ball_position_cm <= TASK3_STABLE_MAX_POSITION_CM)
+        {
+            if(!task3_stable_timer_active)
+            {
+                task3_stable_timer_active = 1;
+                task3_stable_start_time_tenths = oled_elapsed_tenths;
+            }
+            else if((oled_elapsed_tenths - task3_stable_start_time_tenths)
+                  >= TASK3_STABLE_TIME_TENTHS)
+            {
+                task3_step_target_angle = TASK3_NEGATIVE_HOLD_BASE_ANGLE;
+                Step_To_Angle(task3_step_target_angle, TASK1_STEP_FREQUENCY_HZ);
+                task3_state = TASK3_DONE;
+                OLED_Show_Status("TASK3 DONE");
+            }
+        }
+        else
+        {
+            task3_stable_timer_active = 0;
+        }
     }
 }
 
@@ -586,5 +605,56 @@ void Task4 (void)
     if(TASK4_RUNNING == task4_state)
     {
         Gray_Line_Update_Target();
+    }
+}
+
+void Task6_Init (void)
+{
+    task6_active = 0;
+}
+
+void Task6_Cancel (void)
+{
+    task6_active = 0;
+}
+
+/* mode=6：B0增加0.05度，A31减少0.05度，A30将当前初始化角度保存到Flash。 */
+void Task6 (void)
+{
+    float target_angle;
+    uint8 changed = 0;
+
+    if(!task6_active)
+    {
+        enable_task = false;
+        enable_gray_line = false;
+        Motor_PID_New_Stop();
+        task6_active = 1;
+        target_angle = Step_Encoder_Get_Startup_Target_Angle();
+        (void)Step_Encoder_Goto_Startup_Angle();
+        OLED_Show_Step_Angle(target_angle);
+    }
+
+    target_angle = Step_Encoder_Get_Startup_Target_Angle();
+    while(Button_Get_Angle_Increase_Event())
+    {
+        target_angle += TASK6_ANGLE_STEP_DEG;
+        changed = 1;
+    }
+    while(Button_Get_Angle_Decrease_Event())
+    {
+        target_angle -= TASK6_ANGLE_STEP_DEG;
+        changed = 1;
+    }
+    if(changed && Step_Encoder_Set_Startup_Target_Angle(target_angle))
+    {
+        (void)Step_Encoder_Goto_Startup_Angle();
+        OLED_Show_Step_Angle(target_angle);
+    }
+
+    if(Button_Get_Start_Event())
+    {
+        (void)Step_Encoder_Save_Startup_Target_Angle();
+        OLED_Show_Step_Angle(Step_Encoder_Get_Startup_Target_Angle());
     }
 }

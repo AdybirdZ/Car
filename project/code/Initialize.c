@@ -53,6 +53,15 @@ static void Init_Power_On_Software_Reset (void)
 }
 
 /*
+函数功能：立即执行一次POR软件复位
+说明：复位后的Init_Power_On_Software_Reset会识别POR软件复位原因，不会再次等待5秒。
+*/
+void Init_Software_Reset (void)
+{
+    DL_SYSCTL_resetDevice(DL_SYSCTL_RESET_POR);
+}
+
+/*
 函数功能：系统初始化，按顺序启动所有外设和模块，贯穿上电到主函数的整个准备阶段
 参数：无
 */

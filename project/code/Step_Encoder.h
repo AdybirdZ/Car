@@ -24,8 +24,9 @@
 #define STEP_ENCODER_COUNT_SIGN            (1)
 
 // ===== 上电初始化目标角度：在此行填写 0.0~360.0 的机械绝对角度 =====
-#define STEP_ENCODER_STARTUP_TARGET_ANGLE  (79.13f)
+#define STEP_ENCODER_DEFAULT_STARTUP_TARGET_ANGLE  (79.13f)
 #define STEP_ENCODER_STARTUP_FREQUENCY_HZ  (500)
+#define STEP_ENCODER_PRESTART_MAX_POSITIVE_OFFSET_DEG (20.0f)
 
 typedef enum
 {
@@ -41,9 +42,14 @@ extern volatile int32 step_encoder_zero_count;
 extern volatile uint32 step_encoder_z_count;
 extern volatile float step_encoder_initial_absolute_angle;
 extern volatile uint8 step_encoder_initial_absolute_valid;
+extern float step_encoder_startup_target_angle;
 
 uint8 Step_Encoder_Init (void);
 uint8 Step_Encoder_Read_Absolute_Angle (float *angle);
+uint8 Step_Encoder_Is_Above_Prestart_Limit (void);
+float Step_Encoder_Get_Startup_Target_Angle (void);
+uint8 Step_Encoder_Set_Startup_Target_Angle (float angle);
+uint8 Step_Encoder_Save_Startup_Target_Angle (void);
 float Step_Encoder_Get_Relative_Angle (void);
 float Step_Encoder_Relative_To_Absolute_Angle (float relative_angle);
 void Step_Encoder_Set_Zero (void);

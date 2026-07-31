@@ -38,6 +38,29 @@
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 // 本例程是开源库空工程 可用作移植或者测试各类内外设
 
+static void Main_Check_Step_Encoder_Before_Task (void)
+{
+    if(Step_Encoder_Is_Above_Prestart_Limit())
+    {
+        Step_Stop();
+        Init_Software_Reset();
+    }
+}
+
+static void Main_Buzz_Start_Wait (void)
+{
+    uint8 count;
+
+    Buzz(1);
+    for(count = 0; count < 100U; count++)
+    {
+        Main_Check_Step_Encoder_Before_Task();
+        system_delay_ms(10);
+    }
+    Buzz(0);
+    Main_Check_Step_Encoder_Before_Task();
+}
+
 int main (void)
 {
     uint8 selected_mode = 0;
@@ -46,12 +69,18 @@ int main (void)
     Task1_Init();
     Task3_Init();
     Task4_Init();
+    Task6_Init();
 
     // mode=1静止平衡；mode=2巡线；mode=3钢球往返；mode=4钢球平衡巡线。
     while(true)
     {
+        Main_Check_Step_Encoder_Before_Task();
         Button_Scan_10ms();
         OLED_Process();
+        if(TASK6_MODE_NUMBER != mode)
+        {
+            Task6_Cancel();
+        }
 
         if(TASK1_MODE_NUMBER == mode)
         {
@@ -74,6 +103,13 @@ int main (void)
             Task4_Prepare();
             Task4();
         }
+        else if(TASK6_MODE_NUMBER == mode)
+        {
+            Task1_Cancel_Prepare();
+            Task3_Cancel_Prepare();
+            Task4_Cancel_Prepare();
+            Task6();
+        }
         else
         {
             Task1_Cancel_Prepare();
@@ -81,7 +117,7 @@ int main (void)
             Task4_Cancel_Prepare();
         }
 
-        if(Button_Get_Start_Event())
+        if(TASK6_MODE_NUMBER != mode && Button_Get_Start_Event())
         {
             if(TASK1_MODE_NUMBER == mode && Task1_Is_Ready())
             {
@@ -110,33 +146,25 @@ int main (void)
 
     if(TASK1_MODE_NUMBER == selected_mode)
     {
-        Buzz(1);
-        system_delay_ms(1000);
-        Buzz(0);
+        Main_Buzz_Start_Wait();
         Task1_Start();
     }
     else if(2U == selected_mode)
     {
         // 原mode=2：A30松开后蜂鸣1秒，再开始计时和巡线。
-        Buzz(1);
-        system_delay_ms(1000);
-        Buzz(0);
+        Main_Buzz_Start_Wait();
         OLED_Start_Time();
         enable_gray_line = true;
         Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
     }
     else if(TASK3_MODE_NUMBER == selected_mode)
     {
-        Buzz(1);
-        system_delay_ms(1000);
-        Buzz(0);
+        Main_Buzz_Start_Wait();
         Task3_Start();
     }
     else
     {
-        Buzz(1);
-        system_delay_ms(1000);
-        Buzz(0);
+        Main_Buzz_Start_Wait();
         Task4_Start();
     }
 

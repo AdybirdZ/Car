@@ -50,5 +50,6 @@
 extern volatile uint8 init_current_module;
 
 void Init ();
+void Init_Software_Reset (void);
 
 #endif

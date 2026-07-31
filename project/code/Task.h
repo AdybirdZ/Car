@@ -31,6 +31,8 @@
 
 // mode=3：钢球从0cm运行到+5cm，再返回并稳定在-5cm。
 #define TASK3_MODE_NUMBER               (3U)
+#define TASK6_MODE_NUMBER               (6U)
+#define TASK6_ANGLE_STEP_DEG            (0.05f)
 #define TASK3_POSITIVE_POSITION_CM      (5.0f)
 #define TASK3_NEGATIVE_POSITION_CM      (-5.0f)
 #define TASK3_POSITION_TOLERANCE_CM     (1.0f)
@@ -39,8 +41,11 @@
 #define TASK3_TO_NEGATIVE_ANGLE         (-6.0f)   // 实测负角度使钢球向负半轴运动
 #define TASK3_MOVE_FREQUENCY_HZ         (500U)
 #define TASK3_BASE_ANGLE_PER_CM         (1.0f)     // 水管弯曲对应的静态位置基准
-#define TASK3_HOLD_ANGLE_PER_CM         (TASK1_BALL_ANGLE_PER_CM)
-#define TASK3_NEGATIVE_TARGET_ANGLE     (TASK1_ZERO_TARGET_OFFSET_ANGLE + TASK3_NEGATIVE_POSITION_CM * TASK3_BASE_ANGLE_PER_CM)
+#define TASK3_NEGATIVE_HOLD_ANGLE_OFFSET (-0.5f)  // -5cm位置的额外静态倾角偏置，当前使基准由-5度变为-5.5度
+#define TASK3_NEGATIVE_HOLD_BASE_ANGLE  (TASK1_ZERO_TARGET_OFFSET_ANGLE + TASK3_NEGATIVE_POSITION_CM * TASK3_BASE_ANGLE_PER_CM + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET)
+#define TASK3_STABLE_MIN_POSITION_CM    (-6.0f)
+#define TASK3_STABLE_MAX_POSITION_CM    (-4.0f)
+#define TASK3_STABLE_TIME_TENTHS        (10U)      // 10个0.1秒计时单位，即连续稳定1秒
 #define TASK3_NEGATIVE_BRAKE_POSITION_CM (-2.1f)   // 前往-5cm途中提前急刹的位置
 #define TASK3_NEGATIVE_BRAKE_ANGLE       (30.0f)   // 到达急刹点时的固定相对目标角度
 #define TASK3_BRAKE_FREQUENCY_HZ        (3000U)
@@ -71,7 +76,8 @@ typedef enum
     TASK3_READY,
     TASK3_MOVE_TO_POSITIVE,
     TASK3_MOVE_TO_NEGATIVE,
-    TASK3_HOLD_NEGATIVE
+    TASK3_HOLD_NEGATIVE,
+    TASK3_DONE
 } Task3_State;
 
 extern bool enable_task;
@@ -106,5 +112,8 @@ uint8 Task4_Is_Ready (void);
 void Task4_Start (void);
 void Task4_Tick_10ms (void);
 void Task4 (void);
+void Task6_Init (void);
+void Task6_Cancel (void);
+void Task6 (void);
 
 #endif

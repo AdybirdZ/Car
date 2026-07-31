@@ -122,6 +122,21 @@ void OLED_Show_Status (const char *status)
     ips200pro_label_printf(ips200pro_status_label_id, "%s", status);
 }
 
+void OLED_Show_Step_Angle (float angle)
+{
+    uint16 angle_x100;
+
+    if(!ips200pro_ready)
+    {
+        return;
+    }
+    angle_x100 = (uint16)(angle * 100.0f + 0.5f);
+    ips200pro_label_printf(ips200pro_status_label_id,
+                           "Step: %u.%02u deg",
+                           (unsigned int)(angle_x100 / 100U),
+                           (unsigned int)(angle_x100 % 100U));
+}
+
 void OLED_Process (void)
 {
     uint8 mode_changed = 0;
