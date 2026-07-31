@@ -1,4 +1,5 @@
 #include "Task.h"
+#include "Button.h"
 #include "OLED.h"
 #include "Light_and_Buzzer.h"
 #include "Step_Encoder.h"
@@ -15,6 +16,11 @@ volatile float task4_step_target_angle = 0.0f;
 static volatile uint16 task4_run_ticks = 0;
 static volatile uint8 task4_time_finished = 0;
 static float task4_previous_gray_target = 0.0f;
+static float task4_previous_gray_k = 0.0f;
+static float task4_speed_cm_per_s = 0.0f;
+static float task4_last_speed_position_cm = 0.0f;
+static uint32 task4_last_speed_time_tenths = 0;
+static uint8 task4_speed_valid = 0;
 static volatile Task4_State task1_state = TASK4_IDLE;
 static volatile float task1_ball_position_cm = 0.0f;
 static volatile float task1_step_target_angle = 0.0f;
@@ -22,6 +28,7 @@ static float task1_speed_cm_per_s = 0.0f;
 static float task1_last_speed_position_cm = 0.0f;
 static uint32 task1_last_speed_time_tenths = 0;
 static uint8 task1_speed_valid = 0;
+static uint8 task1_stop_requested = 0;
 static volatile Task3_State task3_state = TASK3_IDLE;
 static volatile float task3_ball_position_cm = 0.0f;
 static volatile float task3_step_target_angle = 0.0f;
@@ -30,8 +37,7 @@ static float task3_last_speed_position_cm = 0.0f;
 static uint32 task3_last_speed_time_tenths = 0;
 static uint8 task3_speed_valid = 0;
 static uint8 task3_negative_brake_done = 0;
-static uint8 task3_stable_timer_active = 0;
-static uint32 task3_stable_start_time_tenths = 0;
+static uint8 task3_stop_requested = 0;
 static uint8 task6_active = 0;
 volatile float task3_absolute_target_angle = STEP_ENCODER_DEFAULT_STARTUP_TARGET_ANGLE;
 
@@ -120,6 +126,7 @@ static uint8 Task_Read_Ball_Position (float *position)
     }
 
     *position = parsed_position;
+    OLED_Show_K230_Position(parsed_position);
     return 1;
 }
 
@@ -183,6 +190,7 @@ void Task1_Init (void)
     task1_step_target_angle = 0.0f;
     task1_speed_cm_per_s = 0.0f;
     task1_speed_valid = 0;
+    task1_stop_requested = 0;
 }
 
 // mode切换到1时启动K230，收到第一帧合法钢球位置后才允许A30启动。
@@ -217,6 +225,11 @@ uint8 Task1_Is_Ready (void)
     return (TASK4_READY == task1_state) ? 1U : 0U;
 }
 
+uint8 Task1_Is_Stop_Requested (void)
+{
+    return task1_stop_requested;
+}
+
 // 蜂鸣1秒由main完成；此模式不启动巡线和车轮PID，仅启动钢球平衡。
 void Task1_Start (void)
 {
@@ -230,6 +243,10 @@ void Task1_Start (void)
     Motor_PID_New_Stop();
     Step_To_Angle(0.0f, TASK4_STEP_FREQUENCY_HZ);
     task1_speed_valid = 0;
+    task1_stop_requested = 0;
+    while(Button_Get_Angle_Increase_Event())
+    {
+    }
     OLED_Start_Time();
     task1_state = TASK4_RUNNING;
     OLED_Show_Status("BALL BALANCE");
@@ -295,6 +312,16 @@ void Task1 (void)
     float position;
     float normal_target_angle;
 
+    if(TASK4_RUNNING == task1_state && Button_Get_Angle_Increase_Event())
+    {
+        task1_stop_requested = 1;
+        task1_state = TASK4_DONE;
+        OLED_Stop_Time();
+        Serial_Send_Byte(K230_STOP_COMMAND);
+        OLED_Show_Status("TASK1 STOPPED");
+        return;
+    }
+
     if(!Task_Read_Ball_Position(&position))
     {
         return;
@@ -331,8 +358,7 @@ void Task3_Init (void)
     task3_speed_cm_per_s = 0.0f;
     task3_speed_valid = 0;
     task3_negative_brake_done = 0;
-    task3_stable_timer_active = 0;
-    task3_stable_start_time_tenths = 0;
+    task3_stop_requested = 0;
     task3_absolute_target_angle = Step_Encoder_Get_Startup_Target_Angle();
 }
 
@@ -368,6 +394,11 @@ uint8 Task3_Is_Ready (void)
     return (TASK3_READY == task3_state) ? 1U : 0U;
 }
 
+uint8 Task3_Is_Stop_Requested (void)
+{
+    return task3_stop_requested;
+}
+
 // 蜂鸣1秒由main完成；车辆保持静止，先倾斜摆杆使钢球向+5cm运行。
 void Task3_Start (void)
 {
@@ -383,8 +414,10 @@ void Task3_Start (void)
     task3_speed_cm_per_s = 0.0f;
     task3_speed_valid = 0;
     task3_negative_brake_done = 0;
-    task3_stable_timer_active = 0;
-    task3_stable_start_time_tenths = 0;
+    task3_stop_requested = 0;
+    while(Button_Get_Angle_Increase_Event())
+    {
+    }
     Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
     task3_state = TASK3_MOVE_TO_POSITIVE;
     OLED_Start_Time();
@@ -395,6 +428,19 @@ void Task3_Start (void)
 void Task3 (void)
 {
     float position;
+
+    if((TASK3_MOVE_TO_POSITIVE == task3_state
+     || TASK3_MOVE_TO_NEGATIVE == task3_state
+     || TASK3_HOLD_NEGATIVE == task3_state)
+    && Button_Get_Angle_Increase_Event())
+    {
+        task3_stop_requested = 1;
+        task3_state = TASK3_DONE;
+        OLED_Stop_Time();
+        Serial_Send_Byte(K230_STOP_COMMAND);
+        OLED_Show_Status("TASK3 STOPPED");
+        return;
+    }
 
     if(!Task_Read_Ball_Position(&position))
     {
@@ -450,7 +496,6 @@ void Task3 (void)
                                           task3_speed_cm_per_s)
                                     + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET;
             Step_To_Angle(task3_step_target_angle, TASK3_BRAKE_FREQUENCY_HZ);
-            task3_stable_timer_active = 0;
             task3_state = TASK3_HOLD_NEGATIVE;
             OLED_Show_Status("HOLD -5CM");
         }
@@ -465,28 +510,6 @@ void Task3 (void)
                                       task3_speed_cm_per_s)
                                 + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET;
         Step_To_Angle(task3_step_target_angle, TASK1_STEP_FREQUENCY_HZ);
-
-        if(task3_ball_position_cm >= TASK3_STABLE_MIN_POSITION_CM
-        && task3_ball_position_cm <= TASK3_STABLE_MAX_POSITION_CM)
-        {
-            if(!task3_stable_timer_active)
-            {
-                task3_stable_timer_active = 1;
-                task3_stable_start_time_tenths = oled_elapsed_tenths;
-            }
-            else if((oled_elapsed_tenths - task3_stable_start_time_tenths)
-                  >= TASK3_STABLE_TIME_TENTHS)
-            {
-                task3_step_target_angle = TASK3_NEGATIVE_HOLD_BASE_ANGLE;
-                Step_To_Angle(task3_step_target_angle, TASK1_STEP_FREQUENCY_HZ);
-                task3_state = TASK3_DONE;
-                OLED_Show_Status("TASK3 DONE");
-            }
-        }
-        else
-        {
-            task3_stable_timer_active = 0;
-        }
     }
 }
 
@@ -497,9 +520,11 @@ void Task4_Init (void)
     task4_step_target_angle = 0.0f;
     task4_run_ticks = 0;
     task4_time_finished = 0;
+    task4_speed_cm_per_s = 0.0f;
+    task4_speed_valid = 0;
 }
 
-// mode切换到4时发送小写s，收到第一帧合法#±XX.XX$后进入可启动状态。
+// mode切换到4时发送小写s并立即允许A30启动，不等待K230首帧或钢球稳定判定。
 void Task4_Prepare (void)
 {
     if(TASK4_IDLE != task4_state)
@@ -510,10 +535,12 @@ void Task4_Prepare (void)
     enable_k230_line = false;
     serial_rx_finish = 0;
     task4_previous_gray_target = gray_line_base_offset;
-    gray_line_base_offset = TASK4_GRAY_TARGET;
+    task4_previous_gray_k = gray_line_k;
+    gray_line_base_offset = 0.0f;
+    gray_line_k = 0.0f;
     Serial_Send_Byte(K230_START_COMMAND);
-    task4_state = TASK4_WAIT_K230;
-    OLED_Show_Status("WAIT K230");
+    task4_state = TASK4_READY;
+    OLED_Show_Status("TASK4 READY");
 }
 
 void Task4_Cancel_Prepare (void)
@@ -524,6 +551,7 @@ void Task4_Cancel_Prepare (void)
     }
     Serial_Send_Byte(K230_STOP_COMMAND);
     gray_line_base_offset = task4_previous_gray_target;
+    gray_line_k = task4_previous_gray_k;
     task4_state = TASK4_IDLE;
     OLED_Show_Status("INIT DONE");
 }
@@ -533,7 +561,12 @@ uint8 Task4_Is_Ready (void)
     return (TASK4_READY == task4_state) ? 1U : 0U;
 }
 
-// 蜂鸣1秒由main完成；启动巡线后在0.1秒内顺时针倾斜20度，随后立即回正。
+uint8 Task4_Is_Finished (void)
+{
+    return (TASK4_DONE == task4_state) ? 1U : 0U;
+}
+
+// 蜂鸣1秒由main完成；巡线从0速度开始，由10ms定时函数按S曲线缓慢提速。
 void Task4_Start (void)
 {
     if(TASK4_READY != task4_state)
@@ -543,14 +576,14 @@ void Task4_Start (void)
 
     enable_task = false;
     enable_gray_line = true;
-    gray_line_base_offset = TASK4_GRAY_TARGET;
-    Motor_PID_New_Start(TASK4_GRAY_TARGET, TASK4_GRAY_TARGET);
-
-    Step_To_Angle(TASK4_LAUNCH_TILT_ANGLE, TASK4_LAUNCH_STEP_FREQUENCY_HZ);
-    Step_To_Angle(0.0f, TASK4_LAUNCH_STEP_FREQUENCY_HZ);
+    gray_line_base_offset = 0.0f;
+    gray_line_k = 0.0f;
+    Motor_PID_New_Start(0.0f, 0.0f);
 
     task4_run_ticks = 0;
     task4_time_finished = 0;
+    task4_speed_cm_per_s = 0.0f;
+    task4_speed_valid = 0;
     task4_state = TASK4_RUNNING;
     OLED_Start_Time();
     OLED_Show_Status("TASK4 RUNNING");
@@ -559,19 +592,47 @@ void Task4_Start (void)
 // OLED的10ms定时器调用；800次后立即关闭车轮，避免主循环阻塞导致超过8秒。
 void Task4_Tick_10ms (void)
 {
+    float progress;
+
     if(TASK4_RUNNING != task4_state || task4_time_finished)
     {
         return;
     }
-    if(++task4_run_ticks >= TASK4_RUN_TIME_TICKS)
+    task4_run_ticks ++;
+    if(task4_run_ticks <= TASK4_ACCEL_TIME_TICKS)
+    {
+        progress = (float)task4_run_ticks / (float)TASK4_ACCEL_TIME_TICKS;
+        gray_line_base_offset = TASK4_GRAY_TARGET
+                              * (3.0f * progress * progress
+                              - 2.0f * progress * progress * progress);
+    }
+    else if(task4_run_ticks >= (TASK4_RUN_TIME_TICKS - TASK4_DECEL_TIME_TICKS))
+    {
+        progress = (float)(TASK4_RUN_TIME_TICKS - task4_run_ticks)
+                 / (float)TASK4_DECEL_TIME_TICKS;
+        if(progress < 0.0f) progress = 0.0f;
+        gray_line_base_offset = TASK4_GRAY_TARGET
+                              * (3.0f * progress * progress
+                              - 2.0f * progress * progress * progress);
+    }
+    else
+    {
+        gray_line_base_offset = TASK4_GRAY_TARGET;
+    }
+    gray_line_k = task4_previous_gray_k
+                * gray_line_base_offset / TASK4_GRAY_TARGET;
+
+    if(task4_run_ticks >= TASK4_RUN_TIME_TICKS)
     {
         task4_time_finished = 1;
+        gray_line_base_offset = 0.0f;
+        gray_line_k = 0.0f;
         enable_gray_line = false;
         Motor_PID_New_Stop();
     }
 }
 
-// mode=4运行函数：巡线并根据钢球位置按0.3度/cm的比例设置摆杆角度。
+// mode=4运行函数：巡线并复用mode=1的位置-速度二次函数保持钢球在0cm附近。
 void Task4 (void)
 {
     float position;
@@ -581,6 +642,7 @@ void Task4 (void)
         OLED_Stop_Time();
         Serial_Send_Byte(K230_STOP_COMMAND);
         Step_To_Angle(0.0f, TASK4_STEP_FREQUENCY_HZ);
+        gray_line_k = task4_previous_gray_k;
         task4_state = TASK4_DONE;
         OLED_Show_Status("TASK4 DONE");
         return;
@@ -589,15 +651,17 @@ void Task4 (void)
     if(Task_Read_Ball_Position(&position))
     {
         task4_ball_position_cm = position;
-        if(TASK4_WAIT_K230 == task4_state)
+        if(TASK4_RUNNING == task4_state)
         {
-            task4_state = TASK4_READY;
-            OLED_Show_Status("TARGET AND K230 DONE");
-        }
-        else if(TASK4_RUNNING == task4_state)
-        {
-            // 正值表示球偏右；增大编码器角度使左侧降低，给钢球向左的负加速度。
-            task4_step_target_angle = task4_ball_position_cm * TASK4_BALL_ANGLE_PER_CM;
+            Task_Update_Ball_Speed(task4_ball_position_cm,
+                                   &task4_speed_cm_per_s,
+                                   &task4_last_speed_position_cm,
+                                   &task4_last_speed_time_tenths,
+                                   &task4_speed_valid);
+            task4_step_target_angle = Task_Calculate_Velocity_Control_Angle(
+                                          TASK1_TARGET_POSITION_CM,
+                                          task4_ball_position_cm,
+                                          task4_speed_cm_per_s);
             Step_To_Angle(task4_step_target_angle, TASK4_STEP_FREQUENCY_HZ);
         }
     }

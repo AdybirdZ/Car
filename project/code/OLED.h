@@ -20,6 +20,7 @@ void OLED_Show_Time (void);
 void OLED_Show_Mode (void);
 void OLED_Show_Status (const char *status);
 void OLED_Show_Step_Angle (float angle);
+void OLED_Show_K230_Position (float position_cm);
 void OLED_Process (void);
 
 #endif

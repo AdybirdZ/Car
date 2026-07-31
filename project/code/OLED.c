@@ -13,6 +13,7 @@ static uint16 ips200pro_page_id = 0;
 static uint16 ips200pro_status_label_id = 0;
 static uint16 ips200pro_time_label_id = 0;
 static uint16 ips200pro_mode_label_id = 0;
+static uint16 ips200pro_k230_label_id = 0;
 
 static void OLED_Timer_Callback (uint32 event, void *ptr)
 {
@@ -54,10 +55,12 @@ void OLED_Init (void)
     ips200pro_status_label_id = ips200pro_label_create(10, 10, 220, 30);
     ips200pro_time_label_id = ips200pro_label_create(10, 55, 220, 35);
     ips200pro_mode_label_id = ips200pro_label_create(10, 100, 220, 35);
+    ips200pro_k230_label_id = ips200pro_label_create(10, 145, 220, 35);
 
     if(0U == ips200pro_status_label_id
     || 0U == ips200pro_time_label_id
-    || 0U == ips200pro_mode_label_id)
+    || 0U == ips200pro_mode_label_id
+    || 0U == ips200pro_k230_label_id)
     {
         return;
     }
@@ -65,12 +68,14 @@ void OLED_Init (void)
     ips200pro_set_font(ips200pro_status_label_id, FONT_SIZE_20);
     ips200pro_set_font(ips200pro_time_label_id, FONT_SIZE_20);
     ips200pro_set_font(ips200pro_mode_label_id, FONT_SIZE_20);
+    ips200pro_set_font(ips200pro_k230_label_id, FONT_SIZE_20);
     ips200pro_set_backlight(255);
 
     ips200pro_ready = true;
     ips200pro_label_printf(ips200pro_status_label_id, "INIT DONE");
     OLED_Show_Time();
     OLED_Show_Mode();
+    ips200pro_label_printf(ips200pro_k230_label_id, "K230: --.-- cm");
 }
 
 void OLED_Start_Time (void)
@@ -135,6 +140,42 @@ void OLED_Show_Step_Angle (float angle)
                            "Step: %u.%02u deg",
                            (unsigned int)(angle_x100 / 100U),
                            (unsigned int)(angle_x100 % 100U));
+}
+
+void OLED_Show_K230_Position (float position_cm)
+{
+    int32 position_x100;
+    uint32 magnitude_x100;
+    char sign = '+';
+
+    if(!ips200pro_ready)
+    {
+        return;
+    }
+
+    if(position_cm < 0.0f)
+    {
+        position_x100 = (int32)(position_cm * 100.0f - 0.5f);
+    }
+    else
+    {
+        position_x100 = (int32)(position_cm * 100.0f + 0.5f);
+    }
+    if(position_x100 < 0)
+    {
+        sign = '-';
+        magnitude_x100 = (uint32)(-position_x100);
+    }
+    else
+    {
+        magnitude_x100 = (uint32)position_x100;
+    }
+
+    ips200pro_label_printf(ips200pro_k230_label_id,
+                           "K230: %c%u.%02u cm",
+                           sign,
+                           (unsigned int)(magnitude_x100 / 100U),
+                           (unsigned int)(magnitude_x100 % 100U));
 }
 
 void OLED_Process (void)

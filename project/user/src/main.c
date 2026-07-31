@@ -40,7 +40,10 @@
 
 static void Main_Check_Step_Encoder_Before_Task (void)
 {
-    if(Step_Encoder_Is_Above_Prestart_Limit())
+    // 上电定位已将当前 A/B 计数清零；相对角度大于+20度即为异常上抬。
+    // 不在主循环读取 PWM 绝对角度，避免其关闭全局中断而丢失 K230 串口数据。
+    if(Step_Encoder_Get_Relative_Angle()
+       > STEP_ENCODER_PRESTART_MAX_POSITIVE_OFFSET_DEG)
     {
         Step_Stop();
         Init_Software_Reset();
@@ -70,6 +73,10 @@ int main (void)
     Task3_Init();
     Task4_Init();
     Task6_Init();
+
+    while(true)
+    {
+        selected_mode = 0;
 
     // mode=1静止平衡；mode=2巡线；mode=3钢球往返；mode=4钢球平衡巡线。
     while(true)
@@ -173,21 +180,46 @@ int main (void)
         if(TASK1_MODE_NUMBER == selected_mode)
         {
             Task1();
+            if(Task1_Is_Stop_Requested())
+            {
+                Task1_Init();
+                OLED_Show_Status("SELECT MODE");
+                break;
+            }
         }
         else if(2U == selected_mode)
         {
             Gray_Line_Update_Target();
             Task_Update();
+            if(task_stop_flag)
+            {
+                Task_Init();
+                OLED_Show_Status("SELECT MODE");
+                break;
+            }
         }
         else if(TASK3_MODE_NUMBER == selected_mode)
         {
             Task3();
+            if(Task3_Is_Stop_Requested())
+            {
+                Task3_Init();
+                OLED_Show_Status("SELECT MODE");
+                break;
+            }
         }
         else
         {
             Task4();
+            if(Task4_Is_Finished())
+            {
+                Task4_Init();
+                OLED_Show_Status("SELECT MODE");
+                break;
+            }
         }
         OLED_Process();
         system_delay_ms(10);
+    }
     }
 }
