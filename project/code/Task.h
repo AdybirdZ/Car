@@ -25,6 +25,11 @@
 #define TASK1_BRAKE_FREQUENCY_HZ        (3000U)
 #define TASK1_SAMPLE_PERIOD_S           (0.1f)    // K230位置和速度每0.1秒更新一次
 
+// 钢球位置-速度串级控制参数：位置误差先换算为目标速度，速度误差再换算为摆杆倾角。
+#define BALL_VELOCITY_TARGET_PER_CM     (0.5f)    // 偏离目标1cm，对应朝目标方向0.5cm/s的目标速度
+#define BALL_VELOCITY_ANGLE_PER_CM_PER_S (3.0f)   // 速度误差1cm/s，对应3度的相对目标倾角
+#define BALL_VELOCITY_MAX_TARGET_ANGLE  (30.0f)   // 保护步进电机和机构的最大相对倾角
+
 // mode=3：钢球从0cm运行到+5cm，再返回并稳定在-5cm。
 #define TASK3_MODE_NUMBER               (3U)
 #define TASK3_POSITIVE_POSITION_CM      (5.0f)
@@ -37,7 +42,7 @@
 #define TASK3_BASE_ANGLE_PER_CM         (1.0f)     // 水管弯曲对应的静态位置基准
 #define TASK3_HOLD_ANGLE_PER_CM         (TASK1_BALL_ANGLE_PER_CM)
 #define TASK3_NEGATIVE_TARGET_ANGLE     (TASK1_ZERO_TARGET_OFFSET_ANGLE + TASK3_NEGATIVE_POSITION_CM * TASK3_BASE_ANGLE_PER_CM)
-#define TASK3_NEGATIVE_BRAKE_POSITION_CM (-2.0f)   // 前往-5cm途中提前急刹的位置
+#define TASK3_NEGATIVE_BRAKE_POSITION_CM (-2.1f)   // 前往-5cm途中提前急刹的位置
 #define TASK3_NEGATIVE_BRAKE_ANGLE       (30.0f)   // 到达急刹点时的固定相对目标角度
 #define TASK3_BRAKE_FREQUENCY_HZ        (3000U)
 
@@ -85,6 +90,9 @@ void Task1_Cancel_Prepare (void);
 uint8 Task1_Is_Ready (void);
 void Task1_Start (void);
 void Task1 (void);
+float Task_Calculate_Velocity_Control_Angle (float target_position_cm,
+                                             float ball_position_cm,
+                                             float ball_speed_cm_per_s);
 float Task_Calculate_Absolute_Target_Angle (float target_position_cm);
 void Task3_Init (void);
 void Task3_Prepare (void);

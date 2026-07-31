@@ -127,6 +127,19 @@ static float Task_Abs (float value)
     return (value < 0.0f) ? -value : value;
 }
 
+static float Task_Limit (float value, float minimum, float maximum)
+{
+    if(value < minimum)
+    {
+        return minimum;
+    }
+    if(value > maximum)
+    {
+        return maximum;
+    }
+    return value;
+}
+
 // 每0.1秒用K230的新位置更新一次速度，避免串口帧率变化影响速度单位。
 static void Task_Update_Ball_Speed (float position,
                                     float *speed,
@@ -226,6 +239,38 @@ void Task1_Start (void)
     OLED_Start_Time();
     task1_state = TASK4_RUNNING;
     OLED_Show_Status("BALL BALANCE");
+}
+
+/*
+函数功能：根据钢球位置和速度计算摆杆的相对目标角度
+参数说明：
+target_position_cm：钢球期望位置，单位cm
+ball_position_cm：K230测得的当前钢球位置，单位cm
+ball_speed_cm_per_s：钢球当前速度，正方向与K230位置正方向相同，单位cm/s
+返回值：步进电机相对目标角度，单位度
+说明：位置误差先换算成朝目标方向的目标速度；再根据目标速度和实测速度的差值计算倾角。
+      本车机械关系为增大步进电机角度会给钢球负方向加速度，因此计算结果需取反。
+*/
+float Task_Calculate_Velocity_Control_Angle (float target_position_cm,
+                                             float ball_position_cm,
+                                             float ball_speed_cm_per_s)
+{
+    float target_speed_cm_per_s;
+    float speed_error_cm_per_s;
+    float target_angle;
+
+    // 钢球在目标点正侧时，目标速度为负；在负侧时，目标速度为正。
+    target_speed_cm_per_s = (target_position_cm - ball_position_cm)
+                            * BALL_VELOCITY_TARGET_PER_CM;
+    speed_error_cm_per_s = target_speed_cm_per_s - ball_speed_cm_per_s;
+
+    target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
+                 + target_position_cm * TASK3_BASE_ANGLE_PER_CM
+                 - speed_error_cm_per_s * BALL_VELOCITY_ANGLE_PER_CM_PER_S;
+
+    return Task_Limit(target_angle,
+                      -BALL_VELOCITY_MAX_TARGET_ANGLE,
+                      BALL_VELOCITY_MAX_TARGET_ANGLE);
 }
 
 /*
