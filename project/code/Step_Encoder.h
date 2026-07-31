@@ -24,7 +24,7 @@
 #define STEP_ENCODER_COUNT_SIGN            (1)
 
 // ===== 上电初始化目标角度：在此行填写 0.0~360.0 的机械绝对角度 =====
-#define STEP_ENCODER_STARTUP_TARGET_ANGLE  (78.98f)
+#define STEP_ENCODER_STARTUP_TARGET_ANGLE  (79.13f)
 #define STEP_ENCODER_STARTUP_FREQUENCY_HZ  (500)
 
 typedef enum

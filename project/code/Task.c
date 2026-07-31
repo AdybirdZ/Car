@@ -239,26 +239,34 @@ void Task1_Start (void)
 target_position_cm：钢球期望位置，单位cm
 ball_position_cm：K230测得的当前钢球位置，单位cm
 ball_speed_cm_per_s：钢球当前速度，正方向与K230位置正方向相同，单位cm/s
-返回值：步进电机相对目标角度，单位度
-说明：位置误差先换算成朝目标方向的目标速度；再根据目标速度和实测速度的差值计算倾角。
-      本车机械关系为增大步进电机角度会给钢球负方向加速度，因此计算结果需取反。
+ 返回值：步进电机相对目标角度，单位度
+ 说明：位置误差先换算成朝目标方向的目标速度；再根据目标速度和实测速度的差值计算倾角。
+      按当前实测控制方向，速度差为正时应增大步进电机目标角度。
 */
 float Task_Calculate_Velocity_Control_Angle (float target_position_cm,
                                              float ball_position_cm,
                                              float ball_speed_cm_per_s)
 {
+    float position_error_cm;
+    float position_error_abs_cm;
     float target_speed_cm_per_s;
     float speed_error_cm_per_s;
     float target_angle;
 
-    // 钢球在目标点正侧时，目标速度为负；在负侧时，目标速度为正。
-    target_speed_cm_per_s = (target_position_cm - ball_position_cm)
-                            * BALL_VELOCITY_TARGET_PER_CM;
+    // 位置误差平方使钢球靠近目标点时自动显著降低目标速度，同时保留朝向目标点的方向。
+    position_error_cm = target_position_cm - ball_position_cm;
+    position_error_abs_cm = (position_error_cm < 0.0f)
+                          ? -position_error_cm : position_error_cm;
+    target_speed_cm_per_s = position_error_cm * position_error_abs_cm
+                          * BALL_VELOCITY_TARGET_PER_CM2;
+    target_speed_cm_per_s = Task_Limit(target_speed_cm_per_s,
+                                       -BALL_VELOCITY_MAX_TARGET_SPEED,
+                                       BALL_VELOCITY_MAX_TARGET_SPEED);
     speed_error_cm_per_s = target_speed_cm_per_s - ball_speed_cm_per_s;
 
     target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
                  + target_position_cm * TASK3_BASE_ANGLE_PER_CM
-                 - speed_error_cm_per_s * BALL_VELOCITY_ANGLE_PER_CM_PER_S;
+                 + speed_error_cm_per_s * BALL_VELOCITY_ANGLE_PER_CM_PER_S;
 
     return Task_Limit(target_angle,
                       -BALL_VELOCITY_MAX_TARGET_ANGLE,
@@ -309,7 +317,7 @@ void Task1 (void)
                                   task1_speed_cm_per_s);
 
         task1_step_target_angle = normal_target_angle;
-        Step_To_Angle(task1_step_target_angle, TASK4_STEP_FREQUENCY_HZ);
+        Step_To_Angle(task1_step_target_angle, TASK1_STEP_FREQUENCY_HZ);
     }
 }
 

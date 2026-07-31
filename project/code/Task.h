@@ -20,11 +20,13 @@
 #define TASK1_TARGET_POSITION_CM        (0.0f)
 #define TASK1_BALL_ANGLE_PER_CM         (2.0f)
 #define TASK1_ZERO_TARGET_OFFSET_ANGLE  (0.0f)    // 钢球位于0cm时的相对目标角度
+#define TASK1_STEP_FREQUENCY_HZ         (2000U)
 #define TASK1_SAMPLE_PERIOD_S           (0.1f)    // K230位置和速度每0.1秒更新一次
 
-// 钢球位置-速度串级控制参数：位置误差先换算为目标速度，速度误差再换算为摆杆倾角。
-#define BALL_VELOCITY_TARGET_PER_CM     (0.5f)    // 偏离目标1cm，对应朝目标方向0.5cm/s的目标速度
-#define BALL_VELOCITY_ANGLE_PER_CM_PER_S (3.0f)   // 速度误差1cm/s，对应3度的相对目标倾角
+// 钢球位置、速度串级控制参数：位置误差平方后换算为目标速度，速度误差再换算为摆杆倾角。
+#define BALL_VELOCITY_TARGET_PER_CM2    (2.0f)    // 偏离目标1cm时目标速度2cm/s；偏离2cm时目标速度8cm/s
+#define BALL_VELOCITY_MAX_TARGET_SPEED  (8.0f)    // 限制远离目标时的最大目标速度，单位cm/s
+#define BALL_VELOCITY_ANGLE_PER_CM_PER_S (1.0f)  // 速度误差1cm/s，对应1度的相对目标倾角
 #define BALL_VELOCITY_MAX_TARGET_ANGLE  (30.0f)   // 保护步进电机和机构的最大相对倾角
 
 // mode=3：钢球从0cm运行到+5cm，再返回并稳定在-5cm。
