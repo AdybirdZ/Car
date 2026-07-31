@@ -17,12 +17,9 @@
 
 // mode=1静止钢球平衡参数。
 #define TASK1_MODE_NUMBER               (1U)
+#define TASK1_TARGET_POSITION_CM        (0.0f)
 #define TASK1_BALL_ANGLE_PER_CM         (2.0f)
 #define TASK1_ZERO_TARGET_OFFSET_ANGLE  (0.0f)    // 钢球位于0cm时的相对目标角度
-#define TASK1_BRAKE_TRIGGER_CM          (1.0f)    // 从外侧返回中心、穿过正负1cm时触发一次急刹
-#define TASK1_BRAKE_ANGLE_PER_CM_PER_S  (5.0f)    // 速度每增加1cm/s，急刹幅值增加5度
-#define TASK1_BRAKE_MAX_ANGLE           (30.0f)
-#define TASK1_BRAKE_FREQUENCY_HZ        (3000U)
 #define TASK1_SAMPLE_PERIOD_S           (0.1f)    // K230位置和速度每0.1秒更新一次
 
 // 钢球位置-速度串级控制参数：位置误差先换算为目标速度，速度误差再换算为摆杆倾角。

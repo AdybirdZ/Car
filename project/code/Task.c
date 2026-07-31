@@ -18,7 +18,6 @@ static float task4_previous_gray_target = 0.0f;
 static volatile Task4_State task1_state = TASK4_IDLE;
 static volatile float task1_ball_position_cm = 0.0f;
 static volatile float task1_step_target_angle = 0.0f;
-static int8 task1_brake_return_side = 0;
 static float task1_speed_cm_per_s = 0.0f;
 static float task1_last_speed_position_cm = 0.0f;
 static uint32 task1_last_speed_time_tenths = 0;
@@ -122,11 +121,6 @@ static uint8 Task_Read_Ball_Position (float *position)
     return 1;
 }
 
-static float Task_Abs (float value)
-{
-    return (value < 0.0f) ? -value : value;
-}
-
 static float Task_Limit (float value, float minimum, float maximum)
 {
     if(value < minimum)
@@ -185,7 +179,6 @@ void Task1_Init (void)
     task1_state = TASK4_IDLE;
     task1_ball_position_cm = 0.0f;
     task1_step_target_angle = 0.0f;
-    task1_brake_return_side = 0;
     task1_speed_cm_per_s = 0.0f;
     task1_speed_valid = 0;
 }
@@ -234,7 +227,6 @@ void Task1_Start (void)
     enable_gray_line = false;
     Motor_PID_New_Stop();
     Step_To_Angle(0.0f, TASK4_STEP_FREQUENCY_HZ);
-    task1_brake_return_side = 0;
     task1_speed_valid = 0;
     OLED_Start_Time();
     task1_state = TASK4_RUNNING;
@@ -292,8 +284,6 @@ void Task1 (void)
 {
     float position;
     float normal_target_angle;
-    float brake_target_angle;
-    float brake_angle;
 
     if(!Task_Read_Ball_Position(&position))
     {
@@ -313,32 +303,10 @@ void Task1 (void)
                                &task1_last_speed_position_cm,
                                &task1_last_speed_time_tenths,
                                &task1_speed_valid);
-        normal_target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
-                            - task1_ball_position_cm * TASK1_BALL_ANGLE_PER_CM;
-
-        if(task1_ball_position_cm <= -TASK1_BRAKE_TRIGGER_CM)
-        {
-            task1_brake_return_side = -1;
-        }
-        else if(task1_ball_position_cm >= TASK1_BRAKE_TRIGGER_CM)
-        {
-            task1_brake_return_side = 1;
-        }
-        else if(0 != task1_brake_return_side)
-        {
-            // 实测急刹方向：从负侧回到中心时在-1cm给负角度；从正侧回到中心时在+1cm给正角度。
-            brake_angle = Task_Abs(task1_speed_cm_per_s)
-                        * TASK1_BRAKE_ANGLE_PER_CM_PER_S;
-            if(brake_angle > TASK1_BRAKE_MAX_ANGLE)
-            {
-                brake_angle = TASK1_BRAKE_MAX_ANGLE;
-            }
-            brake_target_angle = (task1_brake_return_side < 0)
-                               ? -brake_angle : brake_angle;
-            task1_brake_return_side = 0;
-            Step_To_Angle(brake_target_angle, TASK1_BRAKE_FREQUENCY_HZ);
-            Step_To_Angle(normal_target_angle, TASK1_BRAKE_FREQUENCY_HZ);
-        }
+        normal_target_angle = Task_Calculate_Velocity_Control_Angle(
+                                  TASK1_TARGET_POSITION_CM,
+                                  task1_ball_position_cm,
+                                  task1_speed_cm_per_s);
 
         task1_step_target_angle = normal_target_angle;
         Step_To_Angle(task1_step_target_angle, TASK4_STEP_FREQUENCY_HZ);
