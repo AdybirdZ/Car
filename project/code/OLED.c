@@ -22,6 +22,7 @@ static void OLED_Timer_Callback (uint32 event, void *ptr)
 
     Button_Scan_10ms();
     Task4_Tick_10ms();
+    Task5_Tick_10ms();
 
     if(oled_time_running)
     {

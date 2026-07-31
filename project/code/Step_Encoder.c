@@ -318,6 +318,7 @@ Step_Encoder_Status Step_Encoder_Move_To_Relative_Angle (float angle, uint32 fre
     uint32 cycle;
     uint32 no_move_pulses = 0;
     uint8 settled = 0;
+    int32 target_pulse_count;
     int32 target_count;
 
     if(0 == frequency_hz)
@@ -325,8 +326,14 @@ Step_Encoder_Status Step_Encoder_Move_To_Relative_Angle (float angle, uint32 fre
         return STEP_ENCODER_TIMEOUT;
     }
 
-    target_count = (int32)(angle * STEP_ENCODER_COUNTS_PER_REV / 360.0f
-                         + ((angle >= 0.0f) ? 0.5f : -0.5f));
+    // 目标先对齐到可实际到达的微步，避免要求电机停在两个STEP脉冲之间。
+    target_pulse_count = (int32)(angle * STEP_MOTOR_FULL_STEPS
+                               * STEP_MOTOR_MICROSTEP / 360.0f
+                               + ((angle >= 0.0f) ? 0.5f : -0.5f));
+    target_count = (int32)((float)target_pulse_count
+                         * STEP_ENCODER_COUNTS_PER_REV
+                         / (STEP_MOTOR_FULL_STEPS * STEP_MOTOR_MICROSTEP)
+                         + ((target_pulse_count >= 0) ? 0.5f : -0.5f));
     for(cycle = 0; cycle < STEP_ENCODER_MAX_CONTROL_CYCLES; cycle++)
     {
         int32 current_count;
@@ -352,8 +359,9 @@ Step_Encoder_Status Step_Encoder_Move_To_Relative_Angle (float angle, uint32 fre
             continue;
         }
         settled = 0;
+        // 取最接近的脉冲数，不能向上取整；否则小误差会多走一步并反向来回修正。
         pulses = (uint32)((error_abs * STEP_MOTOR_FULL_STEPS * STEP_MOTOR_MICROSTEP
-                         + (uint32)STEP_ENCODER_COUNTS_PER_REV - 1U)
+                         + (uint32)(STEP_ENCODER_COUNTS_PER_REV / 2.0f))
                          / (uint32)STEP_ENCODER_COUNTS_PER_REV);
         if(0 == pulses) pulses = 1;
         if(pulses > STEP_ENCODER_MAX_BURST_PULSES) pulses = STEP_ENCODER_MAX_BURST_PULSES;

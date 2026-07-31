@@ -72,6 +72,7 @@ int main (void)
     Task1_Init();
     Task3_Init();
     Task4_Init();
+    Task5_Init();
     Task6_Init();
 
     while(true)
@@ -93,6 +94,7 @@ int main (void)
         {
             Task3_Cancel_Prepare();
             Task4_Cancel_Prepare();
+            Task5_Cancel_Prepare();
             Task1_Prepare();
             Task1();
         }
@@ -100,6 +102,7 @@ int main (void)
         {
             Task1_Cancel_Prepare();
             Task4_Cancel_Prepare();
+            Task5_Cancel_Prepare();
             Task3_Prepare();
             Task3();
         }
@@ -107,14 +110,24 @@ int main (void)
         {
             Task1_Cancel_Prepare();
             Task3_Cancel_Prepare();
+            Task5_Cancel_Prepare();
             Task4_Prepare();
             Task4();
+        }
+        else if(TASK5_MODE_NUMBER == mode)
+        {
+            Task1_Cancel_Prepare();
+            Task3_Cancel_Prepare();
+            Task4_Cancel_Prepare();
+            Task5_Prepare();
+            Task5();
         }
         else if(TASK6_MODE_NUMBER == mode)
         {
             Task1_Cancel_Prepare();
             Task3_Cancel_Prepare();
             Task4_Cancel_Prepare();
+            Task5_Cancel_Prepare();
             Task6();
         }
         else
@@ -122,6 +135,7 @@ int main (void)
             Task1_Cancel_Prepare();
             Task3_Cancel_Prepare();
             Task4_Cancel_Prepare();
+            Task5_Cancel_Prepare();
         }
 
         if(TASK6_MODE_NUMBER != mode && Button_Get_Start_Event())
@@ -144,6 +158,11 @@ int main (void)
             if(TASK4_MODE_NUMBER == mode && Task4_Is_Ready())
             {
                 selected_mode = TASK4_MODE_NUMBER;
+                break;
+            }
+            if(TASK5_MODE_NUMBER == mode && Task5_Is_Ready())
+            {
+                selected_mode = TASK5_MODE_NUMBER;
                 break;
             }
         }
@@ -169,10 +188,15 @@ int main (void)
         Main_Buzz_Start_Wait();
         Task3_Start();
     }
-    else
+    else if(TASK4_MODE_NUMBER == selected_mode)
     {
         Main_Buzz_Start_Wait();
         Task4_Start();
+    }
+    else
+    {
+        Main_Buzz_Start_Wait();
+        Task5_Start();
     }
 
     while(true)
@@ -208,12 +232,22 @@ int main (void)
                 break;
             }
         }
-        else
+        else if(TASK4_MODE_NUMBER == selected_mode)
         {
             Task4();
-            if(Task4_Is_Finished())
+            if(Task4_Is_Stop_Requested())
             {
                 Task4_Init();
+                OLED_Show_Status("SELECT MODE");
+                break;
+            }
+        }
+        else
+        {
+            Task5();
+            if(Task5_Is_Stop_Requested())
+            {
+                Task5_Init();
                 OLED_Show_Status("SELECT MODE");
                 break;
             }

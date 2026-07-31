@@ -19,6 +19,8 @@
 // 步进电机和驱动板参数：200整步一圈，D36A默认设置为16细分
 #define STEP_MOTOR_FULL_STEPS         (200)
 #define STEP_MOTOR_MICROSTEP          (16)
+#define STEP_MOTOR_MICROSTEP_ANGLE_DEG \
+    (360.0f / (STEP_MOTOR_FULL_STEPS * STEP_MOTOR_MICROSTEP))
 
 extern uint32 step_frequency_hz;
 extern uint8 step_direction;
