@@ -397,7 +397,10 @@ Step_Encoder_Status Step_Encoder_Move_To_Relative_Angle (float angle, uint32 fre
     return step_encoder_status;
 }
 
-Step_Encoder_Status Step_Encoder_Goto_Startup_Angle (void)
+static Step_Encoder_Status Step_Encoder_Goto_Startup_Angle_With_Limit (float tolerance_deg,
+                                                                        uint32 max_burst,
+                                                                        uint32 max_cycles,
+                                                                        uint8 settled_required)
 {
     float current_angle;
     float next_angle;
@@ -419,14 +422,13 @@ Step_Encoder_Status Step_Encoder_Goto_Startup_Angle (void)
 
     // 初始化定位直接闭环使用PWM绝对角度。每发一小段脉冲都重新测量，
     // 同时自动判断DIR正转究竟使绝对角度增加还是减小。
-    for(cycle = 0; cycle < STEP_ENCODER_STARTUP_MAX_CYCLES; cycle++)
+    for(cycle = 0; cycle < max_cycles; cycle++)
     {
         error = Step_Encoder_Shortest_Angle_Error(step_encoder_startup_target_angle,
                                                   current_angle);
-        if(error <= STEP_ENCODER_STARTUP_TOLERANCE_DEG
-        && error >= -STEP_ENCODER_STARTUP_TOLERANCE_DEG)
+        if(error <= tolerance_deg && error >= -tolerance_deg)
         {
-            if(++settled >= 3)
+            if(++settled >= settled_required)
             {
                 Step_Encoder_Set_Zero();
                 step_current_angle = 0.0f;
@@ -445,7 +447,7 @@ Step_Encoder_Status Step_Encoder_Goto_Startup_Angle (void)
         pulses = (uint32)(((error >= 0.0f ? error : -error)
                           * STEP_MOTOR_FULL_STEPS * STEP_MOTOR_MICROSTEP / 360.0f) + 0.5f);
         if(0 == pulses) pulses = 1;
-        if(pulses > STEP_ENCODER_STARTUP_MAX_BURST) pulses = STEP_ENCODER_STARTUP_MAX_BURST;
+        if(pulses > max_burst) pulses = max_burst;
 
         if(!direction_known)
         {
@@ -497,6 +499,23 @@ Step_Encoder_Status Step_Encoder_Goto_Startup_Angle (void)
     Step_Stop();
     step_encoder_status = STEP_ENCODER_TIMEOUT;
     return step_encoder_status;
+}
+
+Step_Encoder_Status Step_Encoder_Goto_Startup_Angle (void)
+{
+    return Step_Encoder_Goto_Startup_Angle_With_Limit(STEP_ENCODER_STARTUP_TOLERANCE_DEG,
+                                                       STEP_ENCODER_STARTUP_MAX_BURST,
+                                                       STEP_ENCODER_STARTUP_MAX_CYCLES,
+                                                       3);
+}
+
+/* mode=7 每次按键只移动一个微步，避免绝对角度噪声触发长时间来回补偿。 */
+Step_Encoder_Status Step_Encoder_Goto_Startup_Angle_Mode7 (void)
+{
+    return Step_Encoder_Goto_Startup_Angle_With_Limit(STEP_ENCODER_MODE7_TOLERANCE_DEG,
+                                                       STEP_ENCODER_MODE7_MAX_BURST,
+                                                       STEP_ENCODER_MODE7_MAX_CYCLES,
+                                                       1);
 }
 
 Step_Encoder_Status Step_Encoder_Get_Status (void)

@@ -143,6 +143,34 @@ void OLED_Show_Step_Angle (float angle)
                            (unsigned int)(angle_x100 % 100U));
 }
 
+void OLED_Show_Target_Position (float position_cm)
+{
+    int32 position_x10;
+    uint32 magnitude_x10;
+    char sign = '+';
+
+    if(!ips200pro_ready)
+    {
+        return;
+    }
+    position_x10 = (int32)(position_cm * 10.0f
+                 + ((position_cm >= 0.0f) ? 0.5f : -0.5f));
+    if(position_x10 < 0)
+    {
+        sign = '-';
+        magnitude_x10 = (uint32)(-position_x10);
+    }
+    else
+    {
+        magnitude_x10 = (uint32)position_x10;
+    }
+    ips200pro_label_printf(ips200pro_status_label_id,
+                           "T6 Target: %c%u.%u cm",
+                           sign,
+                           (unsigned int)(magnitude_x10 / 10U),
+                           (unsigned int)(magnitude_x10 % 10U));
+}
+
 void OLED_Show_K230_Position (float position_cm)
 {
     int32 position_x100;

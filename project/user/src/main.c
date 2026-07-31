@@ -74,6 +74,7 @@ int main (void)
     Task4_Init();
     Task5_Init();
     Task6_Init();
+    Task7_Init();
 
     while(true)
     {
@@ -88,6 +89,10 @@ int main (void)
         if(TASK6_MODE_NUMBER != mode)
         {
             Task6_Cancel();
+        }
+        if(TASK7_MODE_NUMBER != mode)
+        {
+            Task7_Cancel();
         }
 
         if(TASK1_MODE_NUMBER == mode)
@@ -127,8 +132,16 @@ int main (void)
             Task1_Cancel_Prepare();
             Task3_Cancel_Prepare();
             Task4_Cancel_Prepare();
-            Task5_Cancel_Prepare();
+            Task6_Prepare();
             Task6();
+        }
+        else if(TASK7_MODE_NUMBER == mode)
+        {
+            Task1_Cancel_Prepare();
+            Task3_Cancel_Prepare();
+            Task4_Cancel_Prepare();
+            Task5_Cancel_Prepare();
+            Task7();
         }
         else
         {
@@ -138,7 +151,7 @@ int main (void)
             Task5_Cancel_Prepare();
         }
 
-        if(TASK6_MODE_NUMBER != mode && Button_Get_Start_Event())
+        if(TASK7_MODE_NUMBER != mode && Button_Get_Start_Event())
         {
             if(TASK1_MODE_NUMBER == mode && Task1_Is_Ready())
             {
@@ -163,6 +176,11 @@ int main (void)
             if(TASK5_MODE_NUMBER == mode && Task5_Is_Ready())
             {
                 selected_mode = TASK5_MODE_NUMBER;
+                break;
+            }
+            if(TASK6_MODE_NUMBER == mode && Task6_Is_Ready())
+            {
+                selected_mode = TASK6_MODE_NUMBER;
                 break;
             }
         }
@@ -193,10 +211,15 @@ int main (void)
         Main_Buzz_Start_Wait();
         Task4_Start();
     }
-    else
+    else if(TASK5_MODE_NUMBER == selected_mode)
     {
         Main_Buzz_Start_Wait();
         Task5_Start();
+    }
+    else
+    {
+        Main_Buzz_Start_Wait();
+        Task6_Start();
     }
 
     while(true)
@@ -242,11 +265,22 @@ int main (void)
                 break;
             }
         }
-        else
+        else if(TASK5_MODE_NUMBER == selected_mode)
         {
             Task5();
             if(Task5_Is_Stop_Requested())
             {
+                Task5_Init();
+                OLED_Show_Status("SELECT MODE");
+                break;
+            }
+        }
+        else
+        {
+            Task6();
+            if(Task6_Is_Stop_Requested())
+            {
+                Task6_Init();
                 Task5_Init();
                 OLED_Show_Status("SELECT MODE");
                 break;

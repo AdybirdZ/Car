@@ -21,6 +21,10 @@
 #define STEP_ENCODER_STARTUP_TOLERANCE_DEG (0.06f)
 #define STEP_ENCODER_STARTUP_MAX_BURST     (32)
 #define STEP_ENCODER_STARTUP_MAX_CYCLES    (300)
+// mode=7 手动标定每次只允许输出一个微步；较宽死区防止在机械回差附近反复往返。
+#define STEP_ENCODER_MODE7_TOLERANCE_DEG   (0.08f)
+#define STEP_ENCODER_MODE7_MAX_BURST       (1)
+#define STEP_ENCODER_MODE7_MAX_CYCLES      (12)
 
 // 正转时若实际角度/计数减小，把该值改为-1；不用改A、B接线。
 #define STEP_ENCODER_COUNT_SIGN            (1)
@@ -57,6 +61,7 @@ float Step_Encoder_Relative_To_Absolute_Angle (float relative_angle);
 void Step_Encoder_Set_Zero (void);
 Step_Encoder_Status Step_Encoder_Move_To_Relative_Angle (float angle, uint32 frequency_hz);
 Step_Encoder_Status Step_Encoder_Goto_Startup_Angle (void);
+Step_Encoder_Status Step_Encoder_Goto_Startup_Angle_Mode7 (void);
 Step_Encoder_Status Step_Encoder_Get_Status (void);
 
 #endif

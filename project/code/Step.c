@@ -210,14 +210,23 @@ void Step_Move_Angle (float angle, uint32 frequency_hz)         // 正数为逆�
 }
 
 /*
-函数功能：让步进电机以指定脉冲频率转到指定的反馈相对角度
+函数功能：让步进电机以指定脉冲频率转到指定的相对角度
 参数说明：
 angle：目标相对角度，Step_Encoder完成上电定位后当前位置定义为0度
 frequency_hz：STEP脉冲频率，单位Hz，数值越大转动越快
-说明：函数每发出一小段精确脉冲都会读取A/B编码器反馈；堵转、无反馈、方向错误
-或超时会停止输出，避免原开环代码在失步后继续向错误位置运行。
+说明：任务运行时由软件记录当前位置，计算角度差后直接输出精确脉冲，
+避免控制循环反复进入严格编码器闭环而产生长时间抖动。上电初始化仍使用绝对角度严格定位。
 */
 void Step_To_Angle (float angle, uint32 frequency_hz)
 {
-    (void)Step_Encoder_Move_To_Relative_Angle(angle, frequency_hz);
+    float delta_angle = angle - step_current_angle;
+
+    // 任务控制采用开环脉冲定位；严格闭环仅保留给上电绝对角度初始化。
+    if(delta_angle > -(STEP_MOTOR_MICROSTEP_ANGLE_DEG * 0.5f)
+    && delta_angle < (STEP_MOTOR_MICROSTEP_ANGLE_DEG * 0.5f))
+    {
+        return;
+    }
+
+    Step_Move_Angle(delta_angle, frequency_hz);
 }
