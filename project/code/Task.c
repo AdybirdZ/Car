@@ -773,7 +773,6 @@ float Task_Calculate_Velocity_Control_Angle (float target_position_cm,
     speed_error_cm_per_s = target_speed_cm_per_s - ball_speed_cm_per_s;
 
     target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
-                 + target_position_cm * TASK3_BASE_ANGLE_PER_CM
                  + speed_error_cm_per_s * task1_ball_velocity_angle_per_cm_per_s;
 
     return Task_Limit(target_angle,
@@ -803,7 +802,6 @@ static float Task3_Calculate_Velocity_Control_Angle (float target_position_cm,
     speed_error_cm_per_s = target_speed_cm_per_s - ball_speed_cm_per_s;
 
     target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
-                 + target_position_cm * TASK3_BASE_ANGLE_PER_CM
                  + speed_error_cm_per_s * task3_ball_velocity_angle_per_cm_per_s;
 
     return Task_Limit(target_angle,
@@ -819,8 +817,9 @@ static float Task3_Calculate_Velocity_Control_Angle (float target_position_cm,
 */
 float Task_Calculate_Absolute_Target_Angle (float target_position_cm)
 {
-    float relative_target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE
-                                + target_position_cm * TASK3_BASE_ANGLE_PER_CM;
+    float relative_target_angle = TASK1_ZERO_TARGET_OFFSET_ANGLE;
+
+    (void)target_position_cm;
 
     return Step_Encoder_Relative_To_Absolute_Angle(relative_target_angle);
 }
@@ -861,7 +860,7 @@ void Task1 (void)
                                &task1_speed_valid,
                                oled_elapsed_tenths);
         normal_target_angle = Task_Calculate_Velocity_Control_Angle(
-                                  TASK1_TARGET_POSITION_CM,
+                                           TASK1_TARGET_POSITION_CM,
                                   task1_ball_position_cm,
                                   task1_speed_cm_per_s);
         normal_target_angle += Task_Update_Integral_Angle(
@@ -1296,11 +1295,11 @@ void Task4 (void)
                                    &task4_speed_valid,
                                    task4_speed_elapsed_tenths);
             target_angle = Task_Calculate_Velocity_Control_Angle(
-                                          TASK1_TARGET_POSITION_CM,
+                                          TASK4_TARGET_POSITION_CM,
                                           task4_ball_position_cm,
                                           task4_speed_cm_per_s)
                                      + Task_Update_Integral_Angle(
-                                          TASK1_TARGET_POSITION_CM,
+                                          TASK4_TARGET_POSITION_CM,
                                           task4_ball_position_cm,
                                           task4_speed_elapsed_tenths,
                                           &task4_integral_error_cm_s,
@@ -1315,9 +1314,6 @@ void Task4 (void)
             target_angle = Task_Limit(target_angle,
                                       -BALL_VELOCITY_MAX_TARGET_ANGLE,
                                       BALL_VELOCITY_MAX_TARGET_ANGLE);
-            target_angle = Task_Limit(target_angle,
-                                      -TASK5_MAX_TARGET_ANGLE,
-                                      TASK5_MAX_TARGET_ANGLE);
             task4_step_target_angle = Task_Limit_Task45_Angle_Change(
                                            target_angle,
                                            task4_step_target_angle);
@@ -1557,6 +1553,9 @@ void Task5 (void)
             target_angle = Task_Limit(target_angle,
                                       -BALL_VELOCITY_MAX_TARGET_ANGLE,
                                       BALL_VELOCITY_MAX_TARGET_ANGLE);
+            target_angle = Task_Limit(target_angle,
+                                      -TASK5_MAX_TARGET_ANGLE,
+                                      TASK5_MAX_TARGET_ANGLE);
             task5_step_target_angle = Task_Limit_Task45_Angle_Change(
                                            target_angle,
                                            task5_step_target_angle);

@@ -20,7 +20,8 @@
 
 // mode=1静止钢球平衡参数。
 #define TASK1_MODE_NUMBER               (1)
-#define TASK1_TARGET_POSITION_CM        (0.0f)
+#define TASK1_TARGET_POSITION_CM        (-5.0f)
+#define TASK4_TARGET_POSITION_CM        (0.0f)
 #define TASK1_BALL_ANGLE_PER_CM         (2.0f)
 #define TASK1_ZERO_TARGET_OFFSET_ANGLE  (0.0f)    // 钢球位于0cm时的相对目标角度
 #define TASK1_STEP_FREQUENCY_HZ         (2000)
@@ -63,12 +64,11 @@
 #define TASK3_QUADRATIC_START_CM        (-4.0f)
 #define TASK3_QUADRATIC_TARGET_CM       (-5.0f)
 #define TASK3_FLAG_POSITION_CM           (4.0f)
-#define TASK3_RETURN_POSITION_CM         (1.0f)
+#define TASK3_RETURN_POSITION_CM         (2.0f)
 #define TASK3_POSITIVE_BRAKE_POSITION_CM (1.0f)    // 正向固定倾角推进至此处后急刹
 #define TASK3_POSITIVE_BRAKE_ANGLE      (-40.0f)   // 正向运动的反向急刹角度
 #define TASK3_POSITIVE_REVERSE_POSITION_CM (4.0f)  // 过了这里折返
 #define TASK3_POSITIVE_CONTROL_FREQUENCY_HZ (TASK1_STEP_FREQUENCY_HZ)
-#define TASK3_BASE_ANGLE_PER_CM         (1.0f)     // 水管弯曲对应的静态位置基准
 #define TASK3_BALL_VELOCITY_TARGET_PER_CM2 (1.5f)  // 偏离目标1cm时目标速度1.5cm/s
 #define TASK3_BALL_VELOCITY_ANGLE_PER_CM_PER_S (1.5f) // 速度误差1cm/s，对应1.5度倾角
 #define TASK8_MODE_NUMBER               (8)
@@ -76,7 +76,6 @@
 #define TASK8_PARAMETER_MIN             (0.0f)
 #define TASK8_PARAMETER_MAX             (10.0f)
 #define TASK3_NEGATIVE_HOLD_ANGLE_OFFSET (0.8f)    // 上调约1度，使负向平衡点由约-6cm回到-5cm
-// #define TASK3_NEGATIVE_HOLD_BASE_ANGLE  (TASK1_ZERO_TARGET_OFFSET_ANGLE + TASK3_NEGATIVE_POSITION_CM * TASK3_BASE_ANGLE_PER_CM + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET)
 #define TASK3_NEGATIVE_HOLD_BASE_ANGLE   (1.0f)
 #define TASK3_NEGATIVE_BRAKE_POSITION_CM (-1.0f)   // 到达-1cm时执行一次反向急停
 #define TASK3_TO_NEGATIVE_BRAKE_ANGLE    (20.0f)   // 前往-5cm过程中急停的反向目标倾角
