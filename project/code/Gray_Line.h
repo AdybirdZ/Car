@@ -6,6 +6,10 @@
 #include "Motor_PID_New.h"
 
 #define GRAY_LINE_WEIGHT_NUM    (GRAY_CHANNEL_NUM)
+#define GRAY_LINE_LOST_SEARCH_BASE_OFFSET (40.0f)
+#define GRAY_LINE_LOST_SEARCH_STEP_OFFSET (5.0f)
+#define GRAY_LINE_LOST_SEARCH_MAX_OFFSET  (180.0f)
+#define GRAY_LINE_LOST_HOLD_COUNT         (20U)
 
 extern volatile bool enable_gray_line;
 extern uint8 gray_line_black_level;

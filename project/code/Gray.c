@@ -67,6 +67,7 @@ void Gray_Update ()
     {
         gray_data[i] = (gray_value >> i) & 0x01;
     }
+
 }
 
 /*

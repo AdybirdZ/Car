@@ -9,9 +9,11 @@ bool enable_task = true;
 uint8 task_stop_flag = 0;
 static uint8 task_stop_pending = 0;
 static uint8 task_stop_delay_ticks = 0;
-static uint8 task_stop_confirm_ticks = 0;
 static float ball_filter_position_cm = 0.0f;
 static uint8 ball_filter_valid = 0;
+static uint8 task2_active = 0;
+static uint8 task2_stop_line_enabled = 0;
+static float task2_start_gray_target = 0.0f;
 
 typedef struct
 {
@@ -61,7 +63,6 @@ static volatile uint8 task5_decelerating = 0;
 static volatile uint8 task5_time_finished = 0;
 static uint8 task5_stop_requested = 0;
 static uint8 task5_stop_line_armed = 0;
-static uint8 task5_stop_confirm_ticks = 0;
 static float task5_previous_gray_target = 0.0f;
 static float task5_previous_gray_k = 0.0f;
 static float task5_previous_gray_weight[GRAY_LINE_WEIGHT_NUM] = {0};
@@ -105,15 +106,8 @@ static float task3_speed_cm_per_s = 0.0f;
 static float task3_last_speed_position_cm = 0.0f;
 static uint32 task3_last_speed_time_tenths = 0;
 static uint8 task3_speed_valid = 0;
-static float task3_integral_error_cm_s = 0.0f;
-static uint32 task3_last_integral_time_tenths = 0;
-static uint8 task3_integral_time_valid = 0;
-static float task3_last_integral_position_error_cm = 0.0f;
-static uint8 task3_integral_position_error_valid = 0;
-static Task_Integral_History_Item task3_integral_history[TASK1_INTEGRAL_HISTORY_TICKS];
-static uint8 task3_integral_history_index = 0;
-static uint8 task3_integral_history_count = 0;
 static uint8 task3_stop_requested = 0;
+volatile uint8 task3_flag = 0;
 static volatile Task6_State task6_state = TASK6_SET_TARGET;
 static float task6_target_position_cm = 0.0f;
 static uint8 task7_active = 0;
@@ -124,10 +118,25 @@ float task3_ball_velocity_angle_per_cm_per_s = TASK3_BALL_VELOCITY_ANGLE_PER_CM_
 static uint8 task8_parameter_index = 0;
 static uint8 task8_flash_loaded = 0;
 static uint8 task8_display_required = 1;
+
+static float Task_Limit_Task45_Angle_Change (float target, float previous)
+{
+    float delta = target - previous;
+    if(delta > TASK4_5_MAX_ANGLE_DELTA_DEG)
+    {
+        return previous + TASK4_5_MAX_ANGLE_DELTA_DEG;
+    }
+    if(delta < -TASK4_5_MAX_ANGLE_DELTA_DEG)
+    {
+        return previous - TASK4_5_MAX_ANGLE_DELTA_DEG;
+    }
+    return target;
+}
+
 volatile float task3_absolute_target_angle = STEP_ENCODER_DEFAULT_STARTUP_TARGET_ANGLE;
 
 #define TASK8_FLASH_SECTOR (5U)
-#define TASK8_FLASH_PAGE   (2U)
+#define TASK8_FLASH_PAGE   (0U)
 #define TASK8_FLASH_MAGIC  (0x54415338UL)
 
 typedef union
@@ -214,7 +223,6 @@ void Task_Init (void)
     task_stop_flag = 0;
     task_stop_pending = 0;
     task_stop_delay_ticks = 0;
-    task_stop_confirm_ticks = 0;
     if(!task8_flash_loaded)
     {
         Task8_Load_Parameters();
@@ -228,7 +236,7 @@ void Task_Init (void)
 */
 void Task_Update (void)
 {
-    if(!enable_task || task_stop_flag)
+    if(!enable_task || task_stop_flag || !task2_stop_line_enabled)
     {
         return;
     }
@@ -237,19 +245,8 @@ void Task_Update (void)
     {
         if(Task_Is_Stop_Line())
         {
-            if(task_stop_confirm_ticks < TASK_STOP_CONFIRM_TICKS)
-            {
-                task_stop_confirm_ticks ++;
-            }
-            if(task_stop_confirm_ticks >= TASK_STOP_CONFIRM_TICKS)
-            {
-                task_stop_pending = 1;
-                task_stop_delay_ticks = TASK_STOP_DELAY_TICKS;
-            }
-        }
-        else
-        {
-            task_stop_confirm_ticks = 0;
+            task_stop_pending = 1;
+            task_stop_delay_ticks = TASK_STOP_DELAY_TICKS;
         }
         return;
     }
@@ -406,15 +403,11 @@ static void Task4_Restore_Gray_Line_Weight (void)
 
 static float Task5_Get_Acceleration_Tilt (void)
 {
-    float progress;
-
-    if(task5_run_ticks >= TASK5_ACCEL_TIME_TICKS)
+    if(task5_run_ticks < TASK5_START_TILT_TIME_TICKS)
     {
-        return 0.0f;
+        return TASK5_START_TILT_ANGLE;
     }
-
-    progress = (float)task5_run_ticks / (float)TASK5_ACCEL_TIME_TICKS;
-    return TASK5_ACCEL_TILT_ANGLE * 4.0f * progress * (1.0f - progress);
+    return 0.0f;
 }
 
 static float Task5_Get_Deceleration_Tilt (void)
@@ -496,6 +489,44 @@ static void Task_Update_Ball_Speed (float position,
 
     *last_position = position;
     *last_time_tenths = current_time_tenths;
+}
+
+void Task2_Start (void)
+{
+    task2_start_gray_target = gray_line_base_offset;
+    task2_active = 1U;
+    task2_stop_line_enabled = 0U;
+}
+
+void Task2_Update (void)
+{
+    float ratio;
+
+    if(!task2_active || oled_elapsed_tenths <= TASK2_DECEL_START_TENTHS)
+    {
+        return;
+    }
+    if(oled_elapsed_tenths >= (TASK2_DECEL_START_TENTHS + TASK2_DECEL_DURATION_TENTHS))
+    {
+        gray_line_base_offset = TASK2_DECEL_GRAY_TARGET;
+        task2_stop_line_enabled = 1U;
+        return;
+    }
+
+    ratio = (float)(oled_elapsed_tenths - TASK2_DECEL_START_TENTHS)
+          / (float)TASK2_DECEL_DURATION_TENTHS;
+    gray_line_base_offset = task2_start_gray_target
+                          + (TASK2_DECEL_GRAY_TARGET - task2_start_gray_target) * ratio;
+}
+
+void Task2_Stop (void)
+{
+    if(task2_active)
+    {
+        gray_line_base_offset = task2_start_gray_target;
+        task2_active = 0U;
+        task2_stop_line_enabled = 0U;
+    }
 }
 
 static void Task_Remove_Recent_Integral (float *integral_error_cm_s,
@@ -861,12 +892,8 @@ void Task3_Init (void)
     task3_step_target_angle = 0.0f;
     task3_speed_cm_per_s = 0.0f;
     task3_speed_valid = 0;
-    task3_integral_error_cm_s = 0.0f;
-    task3_integral_time_valid = 0;
-    task3_integral_position_error_valid = 0;
-    task3_integral_history_index = 0;
-    task3_integral_history_count = 0;
     task3_stop_requested = 0;
+    task3_flag = 0;
     task3_absolute_target_angle = Step_Encoder_Get_Startup_Target_Angle();
 }
 
@@ -918,15 +945,11 @@ void Task3_Start (void)
     enable_task = false;
     enable_gray_line = false;
     Motor_PID_New_Stop();
-    task3_step_target_angle = TASK3_TO_POSITIVE_ANGLE;
+    task3_step_target_angle = TASK3_FIXED_TILT_ANGLE;
     task3_speed_cm_per_s = 0.0f;
     task3_speed_valid = 0;
-    task3_integral_error_cm_s = 0.0f;
-    task3_integral_time_valid = 0;
-    task3_integral_position_error_valid = 0;
-    task3_integral_history_index = 0;
-    task3_integral_history_count = 0;
     task3_stop_requested = 0;
+    task3_flag = 0;
     while(Button_Get_Angle_Increase_Event())
     {
     }
@@ -942,6 +965,9 @@ void Task3 (void)
     float position;
 
     if((TASK3_MOVE_TO_POSITIVE == task3_state
+     || TASK3_INITIAL_TO_NEGATIVE == task3_state
+     || TASK3_WAIT_RETURN_TO_POSITIVE == task3_state
+     || TASK3_INITIAL_TO_POSITIVE == task3_state
      || TASK3_CONTROL_TO_POSITIVE == task3_state
      || TASK3_MOVE_TO_NEGATIVE == task3_state
      || TASK3_HOLD_NEGATIVE == task3_state)
@@ -969,7 +995,10 @@ void Task3 (void)
     }
 
     if(TASK3_MOVE_TO_POSITIVE == task3_state
-    || TASK3_CONTROL_TO_POSITIVE == task3_state
+     || TASK3_INITIAL_TO_NEGATIVE == task3_state
+     || TASK3_WAIT_RETURN_TO_POSITIVE == task3_state
+     || TASK3_INITIAL_TO_POSITIVE == task3_state
+     || TASK3_CONTROL_TO_POSITIVE == task3_state
     || TASK3_MOVE_TO_NEGATIVE == task3_state
     || TASK3_HOLD_NEGATIVE == task3_state)
     {
@@ -983,13 +1012,45 @@ void Task3 (void)
 
     if(TASK3_MOVE_TO_POSITIVE == task3_state)
     {
-        if(task3_ball_position_cm
-        >= TASK3_POSITIVE_BRAKE_POSITION_CM)
+        if(task3_ball_position_cm >= TASK3_FIRST_REVERSE_POSITION_CM)
         {
-            task3_step_target_angle = TASK3_POSITIVE_BRAKE_ANGLE;
-            Step_To_Angle(task3_step_target_angle, TASK3_BRAKE_FREQUENCY_HZ);
-            task3_state = TASK3_CONTROL_TO_POSITIVE;
-            OLED_Show_Status("BRAKE +3CM");
+            task3_step_target_angle = -TASK3_FIXED_TILT_ANGLE;
+            Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
+            task3_state = TASK3_INITIAL_TO_NEGATIVE;
+            OLED_Show_Status("BALL TO -1CM");
+        }
+        return;
+    }
+
+    if(TASK3_INITIAL_TO_NEGATIVE == task3_state)
+    {
+        if(task3_ball_position_cm >= TASK3_FLAG_POSITION_CM)
+        {
+            task3_flag = 1U;
+            task3_state = TASK3_WAIT_RETURN_TO_POSITIVE;
+            OLED_Show_Status("TASK3 FLAG = 1");
+        }
+        return;
+    }
+
+    if(TASK3_WAIT_RETURN_TO_POSITIVE == task3_state)
+    {
+        if(task3_ball_position_cm <= TASK3_RETURN_POSITION_CM)
+        {
+            task3_step_target_angle = TASK3_FIXED_TILT_ANGLE;
+            Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
+            task3_state = TASK3_INITIAL_TO_POSITIVE;
+            OLED_Show_Status("BALL TO -4CM");
+        }
+        return;
+    }
+
+    if(TASK3_INITIAL_TO_POSITIVE == task3_state)
+    {
+        if(task3_ball_position_cm <= TASK3_QUADRATIC_START_CM)
+        {
+            task3_state = TASK3_HOLD_NEGATIVE;
+            OLED_Show_Status("NEGATIVE CONTROL");
         }
         return;
     }
@@ -997,9 +1058,9 @@ void Task3 (void)
     if(TASK3_CONTROL_TO_POSITIVE == task3_state)
     {
         // 以+5cm为二次函数目标减小正向速度；通过+4cm后立即开始返回。
-        if(task3_ball_position_cm >= TASK3_POSITIVE_REVERSE_POSITION_CM)
+        if(task3_ball_position_cm >= TASK3_QUADRATIC_TARGET_CM)
         {
-            task3_step_target_angle = TASK3_TO_NEGATIVE_ANGLE;
+            task3_step_target_angle = -TASK3_FIXED_TILT_ANGLE;
             Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
             task3_state = TASK3_MOVE_TO_NEGATIVE;
             OLED_Show_Status("BALL TO -5CM");
@@ -1007,7 +1068,7 @@ void Task3 (void)
         }
 
         task3_step_target_angle = Task3_Calculate_Velocity_Control_Angle(
-                                      TASK3_POSITIVE_POSITION_CM,
+                                       TASK3_QUADRATIC_TARGET_CM,
                                       task3_ball_position_cm,
                                       task3_speed_cm_per_s);
         Step_To_Angle(task3_step_target_angle,
@@ -1018,13 +1079,13 @@ void Task3 (void)
     if(TASK3_MOVE_TO_NEGATIVE == task3_state)
     {
         if(task3_ball_position_cm
-        <= TASK3_NEGATIVE_BRAKE_POSITION_CM)
+        <= TASK3_SECOND_REVERSE_POSITION_CM)
         {
             // 到达-1cm时一次性反向急停，随后始终由二次位置-速度函数控制。
-            task3_step_target_angle = TASK3_TO_NEGATIVE_BRAKE_ANGLE;
-            Step_To_Angle(task3_step_target_angle, TASK3_BRAKE_FREQUENCY_HZ);
+            task3_step_target_angle = TASK3_FIXED_TILT_ANGLE;
+            Step_To_Angle(task3_step_target_angle, TASK3_MOVE_FREQUENCY_HZ);
             task3_state = TASK3_HOLD_NEGATIVE;
-            OLED_Show_Status("BRAKE -1CM");
+            OLED_Show_Status("BALL HOLD -5CM");
         }
         return;
     }
@@ -1035,19 +1096,7 @@ void Task3 (void)
                                       TASK3_NEGATIVE_POSITION_CM,
                                       task3_ball_position_cm,
                                       task3_speed_cm_per_s)
-                                + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET
-                                + Task_Update_Integral_Angle(
-                                      TASK3_NEGATIVE_POSITION_CM,
-                                      task3_ball_position_cm,
-                                      oled_elapsed_tenths,
-                                      &task3_integral_error_cm_s,
-                                      &task3_last_integral_time_tenths,
-                                      &task3_integral_time_valid,
-                                      &task3_last_integral_position_error_cm,
-                                      &task3_integral_position_error_valid,
-                                      task3_integral_history,
-                                      &task3_integral_history_index,
-                                      &task3_integral_history_count);
+                                + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET;
         Step_To_Angle(task3_step_target_angle, TASK1_STEP_FREQUENCY_HZ);
     }
 }
@@ -1187,15 +1236,6 @@ void Task4_Tick_10ms (void)
                               * (3.0f * progress * progress
                               - 2.0f * progress * progress * progress);
     }
-    else if(task4_run_ticks >= (TASK4_RUN_TIME_TICKS - TASK4_DECEL_TIME_TICKS))
-    {
-        progress = (float)(TASK4_RUN_TIME_TICKS - task4_run_ticks)
-                 / (float)TASK4_DECEL_TIME_TICKS;
-        if(progress < 0.0f) progress = 0.0f;
-        gray_line_base_offset = TASK4_GRAY_TARGET
-                              * (3.0f * progress * progress
-                              - 2.0f * progress * progress * progress);
-    }
     else
     {
         gray_line_base_offset = TASK4_GRAY_TARGET;
@@ -1220,6 +1260,7 @@ void Task4_Tick_10ms (void)
 void Task4 (void)
 {
     float position;
+    float target_angle;
 
     if((TASK4_RUNNING == task4_state || TASK4_HOLD == task4_state)
     && Button_Get_Angle_Increase_Event())
@@ -1254,11 +1295,11 @@ void Task4 (void)
                                    &task4_last_speed_time_tenths,
                                    &task4_speed_valid,
                                    task4_speed_elapsed_tenths);
-            task4_step_target_angle = Task_Calculate_Velocity_Control_Angle(
+            target_angle = Task_Calculate_Velocity_Control_Angle(
                                           TASK1_TARGET_POSITION_CM,
                                           task4_ball_position_cm,
                                           task4_speed_cm_per_s)
-                                    + Task_Update_Integral_Angle(
+                                     + Task_Update_Integral_Angle(
                                           TASK1_TARGET_POSITION_CM,
                                           task4_ball_position_cm,
                                           task4_speed_elapsed_tenths,
@@ -1270,12 +1311,16 @@ void Task4 (void)
                                           task4_integral_history,
                                           &task4_integral_history_index,
                                           &task4_integral_history_count)
-                                    + Task4_Get_Acceleration_Tilt()
-                                    + Task4_Get_Deceleration_Tilt();
-            task4_step_target_angle = Task_Limit(
-                                          task4_step_target_angle,
-                                          -BALL_VELOCITY_MAX_TARGET_ANGLE,
-                                          BALL_VELOCITY_MAX_TARGET_ANGLE);
+                                     + Task4_Get_Acceleration_Tilt();
+            target_angle = Task_Limit(target_angle,
+                                      -BALL_VELOCITY_MAX_TARGET_ANGLE,
+                                      BALL_VELOCITY_MAX_TARGET_ANGLE);
+            target_angle = Task_Limit(target_angle,
+                                      -TASK5_MAX_TARGET_ANGLE,
+                                      TASK5_MAX_TARGET_ANGLE);
+            task4_step_target_angle = Task_Limit_Task45_Angle_Change(
+                                           target_angle,
+                                           task4_step_target_angle);
             Step_To_Angle(task4_step_target_angle, TASK4_STEP_FREQUENCY_HZ);
         }
     }
@@ -1297,7 +1342,6 @@ void Task5_Init (void)
     task5_time_finished = 0;
     task5_stop_requested = 0;
     task5_stop_line_armed = 0;
-    task5_stop_confirm_ticks = 0;
     task5_speed_cm_per_s = 0.0f;
     task5_speed_valid = 0;
     task5_speed_elapsed_tenths = 0;
@@ -1385,7 +1429,6 @@ void Task5_Start (void)
     task5_time_finished = 0;
     task5_stop_requested = 0;
     task5_stop_line_armed = 0;
-    task5_stop_confirm_ticks = 0;
     task5_speed_cm_per_s = 0.0f;
     task5_speed_valid = 0;
     task5_speed_elapsed_tenths = 0;
@@ -1428,26 +1471,7 @@ void Task5_Tick_10ms (void)
     }
 
     task5_run_ticks ++;
-    if(!task5_decelerating
-    && task5_run_ticks >= (TASK5_MAX_TOTAL_TIME_TICKS - TASK5_DECEL_TIME_TICKS))
-    {
-        task5_decelerating = 1;
-        task5_decel_ticks = 0;
-    }
-
-    if(task5_decelerating)
-    {
-        if(task5_decel_ticks < TASK5_DECEL_TIME_TICKS)
-        {
-            task5_decel_ticks ++;
-        }
-        progress = (float)(TASK5_DECEL_TIME_TICKS - task5_decel_ticks)
-                 / (float)TASK5_DECEL_TIME_TICKS;
-        gray_line_base_offset = TASK5_GRAY_TARGET
-                              * (3.0f * progress * progress
-                              - 2.0f * progress * progress * progress);
-    }
-    else if(task5_run_ticks <= TASK5_ACCEL_TIME_TICKS)
+    if(task5_run_ticks <= TASK5_ACCEL_TIME_TICKS)
     {
         progress = (float)task5_run_ticks / (float)TASK5_ACCEL_TIME_TICKS;
         gray_line_base_offset = TASK5_GRAY_TARGET
@@ -1465,7 +1489,7 @@ void Task5_Tick_10ms (void)
     gray_line_right_target = gray_line_base_offset - gray_line_correct_offset;
     Motor_PID_New_Set_Targets(gray_line_left_target, gray_line_right_target);
 
-    if(task5_decelerating && task5_decel_ticks >= TASK5_DECEL_TIME_TICKS)
+    if(task5_run_ticks >= TASK5_MAX_TOTAL_TIME_TICKS)
     {
         task5_time_finished = 1;
         gray_line_base_offset = 0.0f;
@@ -1478,6 +1502,7 @@ void Task5_Tick_10ms (void)
 void Task5 (void)
 {
     float position;
+    float target_angle;
 
     if((TASK4_RUNNING == task5_state || TASK4_HOLD == task5_state)
     && Button_Get_Angle_Increase_Event())
@@ -1512,7 +1537,7 @@ void Task5 (void)
                                    &task5_last_speed_time_tenths,
                                    &task5_speed_valid,
                                    task5_speed_elapsed_tenths);
-            task5_step_target_angle = Task_Calculate_Velocity_Control_Angle(
+            target_angle = Task_Calculate_Velocity_Control_Angle(
                                           task5_target_position_cm,
                                           task5_ball_position_cm,
                                           task5_speed_cm_per_s)
@@ -1528,12 +1553,13 @@ void Task5 (void)
                                           task5_integral_history,
                                           &task5_integral_history_index,
                                           &task5_integral_history_count)
-                                    + Task5_Get_Acceleration_Tilt()
-                                    + Task5_Get_Deceleration_Tilt();
-            task5_step_target_angle = Task_Limit(
-                                          task5_step_target_angle,
-                                          -BALL_VELOCITY_MAX_TARGET_ANGLE,
-                                          BALL_VELOCITY_MAX_TARGET_ANGLE);
+                                     + Task5_Get_Acceleration_Tilt();
+            target_angle = Task_Limit(target_angle,
+                                      -BALL_VELOCITY_MAX_TARGET_ANGLE,
+                                      BALL_VELOCITY_MAX_TARGET_ANGLE);
+            task5_step_target_angle = Task_Limit_Task45_Angle_Change(
+                                           target_angle,
+                                           task5_step_target_angle);
             Step_To_Angle(task5_step_target_angle, TASK5_STEP_FREQUENCY_HZ);
         }
     }
@@ -1542,33 +1568,6 @@ void Task5 (void)
     {
         Gray_Line_Update_Target();
 
-        if(!task5_stop_line_armed)
-        {
-            if(!Task_Is_Stop_Line())
-            {
-                task5_stop_line_armed = 1;
-            }
-        }
-        else if(!task5_decelerating)
-        {
-            if(Task_Is_Stop_Line())
-            {
-                if(task5_stop_confirm_ticks < TASK_STOP_CONFIRM_TICKS)
-                {
-                    task5_stop_confirm_ticks ++;
-                }
-                if(task5_stop_confirm_ticks >= TASK_STOP_CONFIRM_TICKS)
-                {
-                    task5_decelerating = 1;
-                    task5_decel_ticks = 0;
-                    OLED_Show_Status("TASK5 RETURN A");
-                }
-            }
-            else
-            {
-                task5_stop_confirm_ticks = 0;
-            }
-        }
     }
 }
 

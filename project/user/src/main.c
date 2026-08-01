@@ -212,6 +212,7 @@ int main (void)
         // 原mode=2：A30松开后蜂鸣1秒，再开始计时和巡线。
         Main_Buzz_Start_Wait();
         OLED_Start_Time();
+        Task2_Start();
         enable_gray_line = true;
         Motor_PID_New_Start(gray_line_base_offset, gray_line_base_offset);
     }
@@ -250,10 +251,12 @@ int main (void)
         }
         else if(2U == selected_mode)
         {
+            Task2_Update();
             Gray_Line_Update_Target();
             Task_Update();
             if(task_stop_flag)
             {
+                Task2_Stop();
                 Task_Init();
                 OLED_Show_Status("SELECT MODE");
                 break;

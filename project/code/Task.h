@@ -14,7 +14,9 @@
 #define TASK_STOP_DELAY_MS              (520)
 #define TASK_UPDATE_PERIOD_MS           (10)
 #define TASK_STOP_DELAY_TICKS           (TASK_STOP_DELAY_MS / TASK_UPDATE_PERIOD_MS)
-#define TASK_STOP_CONFIRM_TICKS         (5)      // 3路黑色连续50ms后确认停车线
+#define TASK2_DECEL_START_TENTHS         (110U)  // 11.0s后开始减速
+#define TASK2_DECEL_DURATION_TENTHS      (10U)   // 用1.0s降至目标速度
+#define TASK2_DECEL_GRAY_TARGET          (300.0f)
 
 // mode=1静止钢球平衡参数。
 #define TASK1_MODE_NUMBER               (1)
@@ -49,13 +51,20 @@
 // D36A当前为16细分，每次按键严格移动一个STEP脉冲对应的角度。
 #define TASK6_ANGLE_STEP_DEG            (STEP_MOTOR_MICROSTEP_ANGLE_DEG)
 #define TASK7_ANGLE_STEP_DEG            (0.10f)
-#define TASK3_POSITIVE_POSITION_CM      (4.0f)      // 正6厘米后管子倾角太大，必须将目标改得靠近中心一点，不然无法折返！
+#define TASK3_POSITIVE_POSITION_CM      (4.0f)     // 正向急刹后的二次控制目标
 #define TASK3_NEGATIVE_POSITION_CM      (-5.0f)
 #define TASK3_POSITION_TOLERANCE_CM     (1.0f)
 #define TASK3_TO_POSITIVE_ANGLE         (11.0f)    // 正向起步倾角，增大以保证钢球能接近+5cm
 #define TASK3_TO_NEGATIVE_ANGLE         (-15.0f)   // 实测负角度使钢球向负半轴运动
 #define TASK3_MOVE_FREQUENCY_HZ         (500)
-#define TASK3_POSITIVE_BRAKE_POSITION_CM (2.5f)    // 正向固定倾角推进至此处后急刹
+#define TASK3_FIXED_TILT_ANGLE          (15.0f)
+#define TASK3_FIRST_REVERSE_POSITION_CM (0.8f)
+#define TASK3_SECOND_REVERSE_POSITION_CM (1.0f)
+#define TASK3_QUADRATIC_START_CM        (-4.0f)
+#define TASK3_QUADRATIC_TARGET_CM       (-5.0f)
+#define TASK3_FLAG_POSITION_CM           (4.0f)
+#define TASK3_RETURN_POSITION_CM         (1.0f)
+#define TASK3_POSITIVE_BRAKE_POSITION_CM (1.0f)    // 正向固定倾角推进至此处后急刹
 #define TASK3_POSITIVE_BRAKE_ANGLE      (-40.0f)   // 正向运动的反向急刹角度
 #define TASK3_POSITIVE_REVERSE_POSITION_CM (4.0f)  // 过了这里折返
 #define TASK3_POSITIVE_CONTROL_FREQUENCY_HZ (TASK1_STEP_FREQUENCY_HZ)
@@ -80,14 +89,14 @@
 #undef TASK3_NEGATIVE_HOLD_ANGLE_OFFSET
 #define TASK3_TO_POSITIVE_ANGLE            (10.0f)
 #define TASK3_POSITIVE_REVERSE_POSITION_CM (4.0f)
-#define TASK3_NEGATIVE_HOLD_ANGLE_OFFSET  (0.0f)
+#define TASK3_NEGATIVE_HOLD_ANGLE_OFFSET  (3.0f)
 
 // mode=4钢球平衡巡线测试参数
 #define TASK4_MODE_NUMBER               (4)
 #define TASK4_GRAY_TARGET               (200.0f)
-#define TASK4_RUN_TIME_TICKS            (800)     // 10ms * 800 = 8.00s
-#define TASK4_ACCEL_TIME_TICKS          (130)     // 1.3秒S曲线缓慢起步
-#define TASK4_DECEL_TIME_TICKS          (130)     // 最后1.3秒S曲线缓慢停车
+#define TASK4_RUN_TIME_TICKS            (900)     // 10ms * 900 = 9.00s
+#define TASK4_ACCEL_TIME_TICKS          (300)     // 3.0秒S曲线缓慢起步
+#define TASK4_DECEL_TIME_TICKS          (0)
 #define TASK4_ACCEL_TILT_ANGLE          (-8.0f)   // 起步补偿峰值，降低以避免钢球被弹出
 #define TASK4_DECEL_TILT_ANGLE          (14.5f)   // 减速补偿倾角；通常与起步补偿方向相反
 #define TASK4_BALL_MAX_CM               (12.0f)
@@ -99,15 +108,18 @@
 #undef TASK4_DECEL_TILT_ANGLE
 #define TASK4_ACCEL_TIME_TICKS           (200)
 #define TASK4_DECEL_TIME_TICKS           (200)
-#define TASK4_ACCEL_TILT_ANGLE           (-2.0f)
-#define TASK4_DECEL_TILT_ANGLE           (2.0f)
+#define TASK4_ACCEL_TILT_ANGLE           (-1.0f)
+#define TASK4_DECEL_TILT_ANGLE           (0.0f)
+#undef TASK4_GRAY_TARGET
+#define TASK4_GRAY_TARGET                (250.0f)
+#define TASK4_5_MAX_ANGLE_DELTA_DEG       (8.0f)        // 防止震动导致小球飞出
 
 // mode=5：环形线路行驶一圈，返回启停线后减速停车并继续平衡钢球。
 #define TASK5_MODE_NUMBER               (5)
 #define TASK5_GRAY_TARGET               (250.0f)
 #define TASK5_MAX_TOTAL_TIME_TICKS      (3000)    // 10ms * 3000 = 30.00s
 #define TASK5_ACCEL_TIME_TICKS          (150)
-#define TASK5_DECEL_TIME_TICKS          (150)
+#define TASK5_DECEL_TIME_TICKS          (0)
 #define TASK5_ACCEL_TILT_ANGLE          (-6.0f)
 #define TASK5_DECEL_TILT_ANGLE          (15.0f)
 #define TASK5_STEP_FREQUENCY_HZ         (TASK1_STEP_FREQUENCY_HZ)
@@ -116,10 +128,13 @@
 #undef TASK5_DECEL_TIME_TICKS
 #undef TASK5_ACCEL_TILT_ANGLE
 #undef TASK5_DECEL_TILT_ANGLE
-#define TASK5_ACCEL_TIME_TICKS           (200)
-#define TASK5_DECEL_TIME_TICKS           (200)
-#define TASK5_ACCEL_TILT_ANGLE           (-2.0f)
+#define TASK5_ACCEL_TIME_TICKS           (400)
+#define TASK5_DECEL_TIME_TICKS           (0)
+#define TASK5_ACCEL_TILT_ANGLE           (0.0f)
 #define TASK5_DECEL_TILT_ANGLE           (2.0f)
+#define TASK5_START_TILT_ANGLE           (-3.0f)
+#define TASK5_START_TILT_TIME_TICKS      (10U)
+#define TASK5_MAX_TARGET_ANGLE           (15.0f)
 
 // mode=6：设置0cm角度
 #define TASK6_MODE_NUMBER               (6)
@@ -144,6 +159,9 @@ typedef enum
     TASK3_WAIT_K230,
     TASK3_READY,
     TASK3_MOVE_TO_POSITIVE,
+    TASK3_INITIAL_TO_NEGATIVE,
+    TASK3_WAIT_RETURN_TO_POSITIVE,
+    TASK3_INITIAL_TO_POSITIVE,
     TASK3_CONTROL_TO_POSITIVE,
     TASK3_MOVE_TO_NEGATIVE,
     TASK3_HOLD_NEGATIVE,
@@ -164,11 +182,15 @@ extern volatile Task4_State task4_state;
 extern volatile float task4_ball_position_cm;
 extern volatile float task4_step_target_angle;
 extern volatile float task3_absolute_target_angle;
+extern volatile uint8 task3_flag;
 extern float task4_gray_line_weight[GRAY_LINE_WEIGHT_NUM];
 extern float task5_gray_line_weight[GRAY_LINE_WEIGHT_NUM];
 
 void Task_Init (void);
 void Task_Update (void);
+void Task2_Start (void);
+void Task2_Update (void);
+void Task2_Stop (void);
 void Task1_Init (void);
 void Task1_Prepare (void);
 void Task1_Cancel_Prepare (void);
