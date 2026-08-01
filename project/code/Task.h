@@ -23,10 +23,13 @@
 #define TASK1_ZERO_TARGET_OFFSET_ANGLE  (0.0f)    // 钢球位于0cm时的相对目标角度
 #define TASK1_STEP_FREQUENCY_HZ         (2000)
 #define TASK1_SAMPLE_PERIOD_S           (0.1f)    // K230位置和速度每0.1秒更新一次
-#define TASK1_INTEGRAL_KI_DEG_PER_CM_S  (0.3f)   // 位置积分每1cm*s补偿0.3度
-#define TASK1_INTEGRAL_ERROR_LIMIT_CM   (1.0f)    // 只积累中心附近的小误差
-#define TASK1_INTEGRAL_MAX_CM_S         (10.0f)   // 积分限幅，最大补偿约1.5度
+#define TASK1_INTEGRAL_HISTORY_TICKS    (10U)     // 保存最近1秒的积分贡献
+#define TASK1_INTEGRAL_KI_DEG_PER_CM_S  (0.6f)   // 位置积分每1cm*s补偿0.6度
+#define TASK1_INTEGRAL_ERROR_LIMIT_CM   (1.7f)    // 太大误差调为1.7
+#define TASK1_INTEGRAL_MAX_CM_S         (50.0f)   // 积分限幅，最大补偿约±15度
 #define TASK1_INTEGRAL_MAX_DT_S         (0.2f)    // 丢帧时限制单次积分时间
+#define TASK1_INTEGRAL_DEADBAND_CM      (0.4f)    // 误差进入±0.4cm后保持I项、不再累积
+#define TASK1_INTEGRAL_CROSS_RESET_CM   (0.3f)    // 穿过目标并进入另一侧0.3cm后移除最近1秒积分
 
 // 钢球位置、速度串级控制参数：位置误差平方后换算为目标速度，速度误差再换算为摆杆倾角。
 #define BALL_VELOCITY_TARGET_PER_CM2    (2.0f)    // 偏离目标1cm时目标速度2cm/s；偏离2cm时目标速度8cm/s
@@ -46,58 +49,46 @@
 // D36A当前为16细分，每次按键严格移动一个STEP脉冲对应的角度。
 #define TASK6_ANGLE_STEP_DEG            (STEP_MOTOR_MICROSTEP_ANGLE_DEG)
 #define TASK7_ANGLE_STEP_DEG            (0.10f)
-#define TASK3_POSITIVE_POSITION_CM      (5.0f)
+#define TASK3_POSITIVE_POSITION_CM      (4.0f)      // 正6厘米后管子倾角太大，必须将目标改得靠近中心一点，不然无法折返！
 #define TASK3_NEGATIVE_POSITION_CM      (-5.0f)
 #define TASK3_POSITION_TOLERANCE_CM     (1.0f)
-#define TASK3_TO_POSITIVE_ANGLE         (13.0f)    // 正向起步倾角，增大以保证钢球能接近+5cm
-#define TASK3_TO_NEGATIVE_ANGLE         (-10.0f)   // 实测负角度使钢球向负半轴运动
+#define TASK3_TO_POSITIVE_ANGLE         (11.0f)    // 正向起步倾角，增大以保证钢球能接近+5cm
+#define TASK3_TO_NEGATIVE_ANGLE         (-15.0f)   // 实测负角度使钢球向负半轴运动
 #define TASK3_MOVE_FREQUENCY_HZ         (500)
-#define TASK3_POSITIVE_BRAKE_POSITION_CM (3.0f)    // 正向固定倾角推进至此处后急刹
+#define TASK3_POSITIVE_BRAKE_POSITION_CM (2.5f)    // 正向固定倾角推进至此处后急刹
 #define TASK3_POSITIVE_BRAKE_ANGLE      (-40.0f)   // 正向运动的反向急刹角度
-#define TASK3_POSITIVE_REVERSE_POSITION_CM (3.8f)  // 二次函数以+5cm为目标时，通过此处立即折返
+#define TASK3_POSITIVE_REVERSE_POSITION_CM (4.0f)  // 过了这里折返
 #define TASK3_POSITIVE_CONTROL_FREQUENCY_HZ (TASK1_STEP_FREQUENCY_HZ)
 #define TASK3_BASE_ANGLE_PER_CM         (1.0f)     // 水管弯曲对应的静态位置基准
+#define TASK3_BALL_VELOCITY_TARGET_PER_CM2 (1.5f)  // 偏离目标1cm时目标速度1.5cm/s
+#define TASK3_BALL_VELOCITY_ANGLE_PER_CM_PER_S (1.5f) // 速度误差1cm/s，对应1.5度倾角
+#define TASK8_MODE_NUMBER               (8)
+#define TASK8_PARAMETER_STEP            (0.1f)
+#define TASK8_PARAMETER_MIN             (0.0f)
+#define TASK8_PARAMETER_MAX             (10.0f)
 #define TASK3_NEGATIVE_HOLD_ANGLE_OFFSET (0.8f)    // 上调约1度，使负向平衡点由约-6cm回到-5cm
-#define TASK3_NEGATIVE_HOLD_BASE_ANGLE  (TASK1_ZERO_TARGET_OFFSET_ANGLE + TASK3_NEGATIVE_POSITION_CM * TASK3_BASE_ANGLE_PER_CM + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET)
-#define TASK3_NEGATIVE_BRAKE_POSITION_CM (-2.5f)   // 此处开始连续减速，避免钢球冲出-6cm
-#define TASK3_NEGATIVE_TARGET_SPEED_PER_CM2 (0.7f) // 更早降低负向目标速度
-#define TASK3_NEGATIVE_MAX_TARGET_SPEED  (3.0f)    // 负向阶段限速，单位cm/s
-#define TASK3_NEGATIVE_ANGLE_PER_CM_PER_S (3.0f)   // 负向速度误差制动增益，单位度/(cm/s)
-#define TASK3_BRAKE_FREQUENCY_HZ        (3000)    // +3cm处正向急刹的转动频率
-
-// mode=4钢球平衡巡线测试参数。
-#undef TASK3_TO_POSITIVE_ANGLE
-#undef TASK3_POSITIVE_REVERSE_POSITION_CM
-#define TASK3_TO_POSITIVE_ANGLE           (10.0f)
-#define TASK3_POSITIVE_REVERSE_POSITION_CM (4.0f)
+// #define TASK3_NEGATIVE_HOLD_BASE_ANGLE  (TASK1_ZERO_TARGET_OFFSET_ANGLE + TASK3_NEGATIVE_POSITION_CM * TASK3_BASE_ANGLE_PER_CM + TASK3_NEGATIVE_HOLD_ANGLE_OFFSET)
+#define TASK3_NEGATIVE_HOLD_BASE_ANGLE   (1.0f)
+#define TASK3_NEGATIVE_BRAKE_POSITION_CM (-1.0f)   // 到达-1cm时执行一次反向急停
+#define TASK3_TO_NEGATIVE_BRAKE_ANGLE    (20.0f)   // 前往-5cm过程中急停的反向目标倾角
+#define TASK3_BRAKE_FREQUENCY_HZ        (3000)    // 正、负方向急停的转动频率
 
 #undef TASK3_NEGATIVE_BRAKE_POSITION_CM
-#define TASK3_NEGATIVE_BRAKE_POSITION_CM  (-2.5f)
-#define TASK3_NEGATIVE_BRAKE_ANGLE         (40.0f)
-
-/* Restore the last verified Task3 tuning without changing other tasks. */
+#define TASK3_NEGATIVE_BRAKE_POSITION_CM  (-1.0f)
 #undef TASK3_TO_POSITIVE_ANGLE
 #undef TASK3_POSITIVE_REVERSE_POSITION_CM
 #undef TASK3_NEGATIVE_HOLD_ANGLE_OFFSET
 #define TASK3_TO_POSITIVE_ANGLE            (10.0f)
 #define TASK3_POSITIVE_REVERSE_POSITION_CM (4.0f)
-#define TASK3_NEGATIVE_HOLD_ANGLE_OFFSET  (-0.5f)
-#define TASK3_NEGATIVE_BRAKE_REFERENCE_SPEED_CM_PER_S (2.0f)
-#define TASK3_NEGATIVE_BRAKE_POSITION_GAIN_CM_PER_CM_PER_S (0.30f)
-#define TASK3_NEGATIVE_BRAKE_POSITION_ADJUST_LIMIT_CM (0.70f)
-#define TASK3_NEGATIVE_SLOW_BRAKE_START_POSITION_CM (0.5f)
-#define TASK3_NEGATIVE_HOLD_START_POSITION_CM (-4.0f)
-#define TASK3_NEGATIVE_SLOW_BRAKE_END_ANGLE (15.0f)
-#define TASK3_NEGATIVE_SPEED_REFERENCE_CM_PER_S (1.5f)
-#define TASK3_NEGATIVE_SPEED_BRAKE_GAIN_DEG_PER_CM_PER_S (4.0f)
-#define TASK3_NEGATIVE_SLOW_BRAKE_MAX_ANGLE (25.0f)
+#define TASK3_NEGATIVE_HOLD_ANGLE_OFFSET  (0.0f)
 
+// mode=4钢球平衡巡线测试参数
 #define TASK4_MODE_NUMBER               (4)
 #define TASK4_GRAY_TARGET               (200.0f)
 #define TASK4_RUN_TIME_TICKS            (800)     // 10ms * 800 = 8.00s
-#define TASK4_ACCEL_TIME_TICKS          (150)     // 1.5秒S曲线缓慢起步
-#define TASK4_DECEL_TIME_TICKS          (145)     // 最后1.5秒S曲线缓慢停车
-#define TASK4_ACCEL_TILT_ANGLE          (-6.0f)   // 降低起步补偿峰值，避免钢球被弹出
+#define TASK4_ACCEL_TIME_TICKS          (130)     // 1.3秒S曲线缓慢起步
+#define TASK4_DECEL_TIME_TICKS          (130)     // 最后1.3秒S曲线缓慢停车
+#define TASK4_ACCEL_TILT_ANGLE          (-8.0f)   // 起步补偿峰值，降低以避免钢球被弹出
 #define TASK4_DECEL_TILT_ANGLE          (14.5f)   // 减速补偿倾角；通常与起步补偿方向相反
 #define TASK4_BALL_MAX_CM               (12.0f)
 #define TASK4_STEP_FREQUENCY_HZ         (TASK1_STEP_FREQUENCY_HZ)
@@ -223,5 +214,13 @@ void Task6 (void);
 void Task7_Init (void);
 void Task7_Cancel (void);
 void Task7 (void);
+void Task8_Init (void);
+void Task8_Cancel (void);
+void Task8 (void);
+
+extern float task1_ball_velocity_target_per_cm2;
+extern float task1_ball_velocity_angle_per_cm_per_s;
+extern float task3_ball_velocity_target_per_cm2;
+extern float task3_ball_velocity_angle_per_cm_per_s;
 
 #endif

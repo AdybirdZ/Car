@@ -20,6 +20,8 @@ typedef union
 
 static volatile uint8 step_encoder_last_state = 0;
 static Step_Encoder_Status step_encoder_status = STEP_ENCODER_PWM_ERROR;
+static uint8 step_encoder_forward_increases_absolute_angle = 1;
+static uint8 step_encoder_absolute_direction_valid = 0;
 
 static void Step_Encoder_Load_Startup_Target_Angle (void)
 {
@@ -248,6 +250,8 @@ uint8 Step_Encoder_Init (void)
     step_encoder_z_count = 0;
     step_encoder_initial_absolute_angle = 0.0f;
     step_encoder_initial_absolute_valid = 0;
+    step_encoder_forward_increases_absolute_angle = 1;
+    step_encoder_absolute_direction_valid = 0;
 
     gpio_init(STEP_ENCODER_A_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
     gpio_init(STEP_ENCODER_B_PIN, GPI, GPIO_HIGH, GPI_PULL_UP);
@@ -410,8 +414,8 @@ static Step_Encoder_Status Step_Encoder_Goto_Startup_Angle_With_Limit (float tol
     uint32 pulses;
     uint32 no_move_pulses = 0;
     uint8 settled = 0;
-    uint8 forward_increases_angle = 1;
-    uint8 direction_known = 0;
+    uint8 forward_increases_angle = step_encoder_forward_increases_absolute_angle;
+    uint8 direction_known = step_encoder_absolute_direction_valid;
     uint8 direction;
 
     if(!Step_Encoder_Read_Absolute_Angle(&current_angle))
@@ -491,6 +495,8 @@ static Step_Encoder_Status Step_Encoder_Goto_Startup_Angle_With_Limit (float tol
             {
                 forward_increases_angle = (signed_movement > 0.0f) ? 1 : 0;
                 direction_known = 1;
+                step_encoder_forward_increases_absolute_angle = forward_increases_angle;
+                step_encoder_absolute_direction_valid = 1;
             }
         }
         current_angle = next_angle;

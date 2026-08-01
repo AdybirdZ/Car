@@ -5,7 +5,7 @@
 #include "zf_device_ips200pro.h"
 
 #define OLED_MODE_MIN                   (1)
-#define OLED_MODE_MAX                   (7)
+#define OLED_MODE_MAX                   (8)
 #define OLED_TIMER_PERIOD_MS            (10)
 #define OLED_TENTH_SECOND_TICKS         (100 / OLED_TIMER_PERIOD_MS)
 #define OLED_TIMER_PIT                  (PIT_TIM_G12)
@@ -22,6 +22,7 @@ void OLED_Show_Status (const char *status);
 void OLED_Show_Step_Angle (float angle);
 void OLED_Show_Target_Position (float position_cm);
 void OLED_Show_K230_Position (float position_cm);
+void OLED_Show_Ball_Control_Parameter (uint8 index, float value);
 void OLED_Process (void);
 
 #endif

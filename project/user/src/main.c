@@ -75,6 +75,7 @@ int main (void)
     Task5_Init();
     Task6_Init();
     Task7_Init();
+    Task8_Init();
 
     while(true)
     {
@@ -93,6 +94,10 @@ int main (void)
         if(TASK7_MODE_NUMBER != mode)
         {
             Task7_Cancel();
+        }
+        if(TASK8_MODE_NUMBER != mode)
+        {
+            Task8_Cancel();
         }
 
         if(TASK1_MODE_NUMBER == mode)
@@ -143,6 +148,15 @@ int main (void)
             Task5_Cancel_Prepare();
             Task7();
         }
+        else if(TASK8_MODE_NUMBER == mode)
+        {
+            Task1_Cancel_Prepare();
+            Task3_Cancel_Prepare();
+            Task4_Cancel_Prepare();
+            Task5_Cancel_Prepare();
+            Task6_Cancel();
+            Task8();
+        }
         else
         {
             Task1_Cancel_Prepare();
@@ -151,7 +165,7 @@ int main (void)
             Task5_Cancel_Prepare();
         }
 
-        if(TASK7_MODE_NUMBER != mode && Button_Get_Start_Event())
+        if(TASK7_MODE_NUMBER != mode && TASK8_MODE_NUMBER != mode && Button_Get_Start_Event())
         {
             if(TASK1_MODE_NUMBER == mode && Task1_Is_Ready())
             {

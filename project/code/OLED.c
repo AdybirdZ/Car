@@ -207,6 +207,21 @@ void OLED_Show_K230_Position (float position_cm)
                            (unsigned int)(magnitude_x100 % 100U));
 }
 
+void OLED_Show_Ball_Control_Parameter (uint8 index, float value)
+{
+    const char *name = "P?";
+
+    if(!ips200pro_ready)
+    {
+        return;
+    }
+    if(0U == index) name = "T1 V/cm2";
+    else if(1U == index) name = "T1 deg/V";
+    else if(2U == index) name = "T3 V/cm2";
+    else if(3U == index) name = "T3 deg/V";
+    ips200pro_label_printf(ips200pro_status_label_id, "%s: %.2f", name, value);
+}
+
 void OLED_Process (void)
 {
     uint8 mode_changed = 0;
