@@ -9,6 +9,12 @@
 #define STEP_ENCODER_PWM_PIN               (B20)
 #define STEP_ENCODER_Z_PIN                 (B21)
 
+// B20复用为TIMA0_CCP2，由硬件同时捕获PWM周期和高电平宽度。
+#define STEP_ENCODER_PWM_CAPTURE_TIMER      (TIMA0)
+#define STEP_ENCODER_PWM_CAPTURE_LOAD       (3999999U)
+#define STEP_ENCODER_PWM_CAPTURE_TIMEOUT_US (10000U)
+/* Active PWM capture timer for B20. */
+
 #define STEP_ENCODER_COUNTS_PER_REV        (4096.0f)
 // 16细分时每个脉冲约对应1.28个编码器计数；1计数死区可避免跨微步来回修正。
 #define STEP_ENCODER_TOLERANCE_COUNT       (1)
@@ -16,13 +22,13 @@
 #define STEP_ENCODER_NO_MOVE_PULSE_LIMIT   (64)
 #define STEP_ENCODER_MAX_CONTROL_CYCLES    (2500)
 #define STEP_ENCODER_PWM_SAMPLE_COUNT      (5)
-#define STEP_ENCODER_PWM_MAX_SPREAD_DEG    (2.0f)
+#define STEP_ENCODER_PWM_MAX_SPREAD_DEG    (0.5f)
 // mode=6按键步长为0.1125度，因此绝对定位死区必须小于一个微步。
 #define STEP_ENCODER_STARTUP_TOLERANCE_DEG (0.06f)
 #define STEP_ENCODER_STARTUP_MAX_BURST     (32)
 #define STEP_ENCODER_STARTUP_MAX_CYCLES    (300)
-// mode=7 手动标定每次只允许输出一个微步；较宽死区防止在机械回差附近反复往返。
 #define STEP_ENCODER_MODE7_TOLERANCE_DEG   (0.04f)
+// mode=7 手动标定每次只允许输出一个微步；较宽死区防止在机械回差附近反复往返。
 #define STEP_ENCODER_MODE7_MAX_BURST       (1)
 #define STEP_ENCODER_MODE7_MAX_CYCLES      (8)
 
@@ -52,6 +58,7 @@ extern float step_encoder_startup_target_angle;
 
 uint8 Step_Encoder_Init (void);
 uint8 Step_Encoder_Read_Absolute_Angle (float *angle);
+void Step_Encoder_PWM_IRQHandler (void);
 uint8 Step_Encoder_Is_Above_Prestart_Limit (void);
 float Step_Encoder_Get_Startup_Target_Angle (void);
 uint8 Step_Encoder_Set_Startup_Target_Angle (float angle);

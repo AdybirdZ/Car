@@ -23,6 +23,13 @@ static Step_Encoder_Status step_encoder_status = STEP_ENCODER_PWM_ERROR;
 static uint8 step_encoder_forward_increases_absolute_angle = 1;
 static uint8 step_encoder_absolute_direction_valid = 0;
 
+static volatile uint32 step_encoder_pwm_last_rise = 0;
+static volatile uint32 step_encoder_pwm_period = 0;
+static volatile uint32 step_encoder_pwm_high = 0;
+static volatile uint32 step_encoder_pwm_sequence = 0;
+static volatile uint8 step_encoder_pwm_have_rise = 0;
+static volatile uint8 step_encoder_pwm_valid = 0;
+
 static void Step_Encoder_Load_Startup_Target_Angle (void)
 {
     uint32 data[3];
@@ -102,11 +109,64 @@ static void Step_Encoder_Z_Callback (uint32 event, void *ptr)
     step_encoder_z_count ++;
 }
 
-static uint8 Step_Encoder_Wait_Level (uint8 level, uint32 timeout_us)
+static uint32 Step_Encoder_PWM_Elapsed (uint32 older, uint32 newer)
 {
+    if(older >= newer)
+    {
+        return older - newer;
+    }
+    return older + (STEP_ENCODER_PWM_CAPTURE_LOAD + 1U - newer);
+}
+
+// 读取一帧PWM。关闭中断可避免其他中断拉长高、低电平的软件计时。
+static uint8 Step_Encoder_Read_Absolute_Angle_Once (float *angle, uint32 *sequence)
+{
+    uint32 high_count;
+    uint32 period_count;
+    uint32 captured_sequence;
+    uint32 key;
+
+    if(NULL == angle || NULL == sequence)
+    {
+        return 0;
+    }
+
+    key = __get_PRIMASK();
+    __disable_irq();
+    high_count = step_encoder_pwm_high;
+    period_count = step_encoder_pwm_period;
+    captured_sequence = step_encoder_pwm_sequence;
+    if(!step_encoder_pwm_valid)
+    {
+        if(0 == key) __enable_irq();
+        return 0;
+    }
+    if(0 == key) __enable_irq();
+
+    if(0U == high_count || 0U == period_count || high_count >= period_count)
+    {
+        return 0;
+    }
+
+    // MT6816/MS42CG：PWM占空比对应单圈位置码，对应的是0~360度绝对角度（掉电不丢失，因为检测磁轴位置）
+    *angle = (((float)high_count / (float)period_count) * 4115.0f - 1.0f)
+           * 360.0f / 4115.0f;
+    if(*angle < 0.0f) *angle = 0.0f;
+    if(*angle >= 360.0f) *angle -= 360.0f;
+    *sequence = captured_sequence;
+    return 1;
+}
+
+static uint8 Step_Encoder_Wait_Next_PWM_Frame (uint32 previous_sequence,
+                                                float *angle,
+                                                uint32 *sequence)
+{
+    uint32 timeout_us = STEP_ENCODER_PWM_CAPTURE_TIMEOUT_US;
+
     while(timeout_us--)
     {
-        if(gpio_get_level(STEP_ENCODER_PWM_PIN) == level)
+        if(Step_Encoder_Read_Absolute_Angle_Once(angle, sequence)
+        && *sequence != previous_sequence)
         {
             return 1;
         }
@@ -115,58 +175,14 @@ static uint8 Step_Encoder_Wait_Level (uint8 level, uint32 timeout_us)
     return 0;
 }
 
-// 读取一帧PWM。关闭中断可避免其他中断拉长高、低电平的软件计时。
-static uint8 Step_Encoder_Read_Absolute_Angle_Once (float *angle)
-{
-    uint32 high_us = 0;
-    uint32 low_us = 0;
-    uint32 period_us;
-    uint32 key;
-
-    if(NULL == angle)
-    {
-        return 0;
-    }
-
-    key = __get_PRIMASK();
-    __disable_irq();
-    if(!Step_Encoder_Wait_Level(GPIO_LOW, 10000)
-    || !Step_Encoder_Wait_Level(GPIO_HIGH, 10000))
-    {
-        if(0 == key) __enable_irq();
-        return 0;
-    }
-    while(gpio_get_level(STEP_ENCODER_PWM_PIN) && high_us < 10000)
-    {
-        high_us ++;
-        system_delay_us(1);
-    }
-    while(!gpio_get_level(STEP_ENCODER_PWM_PIN) && low_us < 10000)
-    {
-        low_us ++;
-        system_delay_us(1);
-    }
-    if(0 == key) __enable_irq();
-
-    period_us = high_us + low_us;
-    if(0 == high_us || 0 == low_us || period_us < 100)
-    {
-        return 0;
-    }
-
-    // MT6816/MS42CG：PWM占空比对应单圈位置码，对应的是0~360度绝对角度（掉电不丢失，因为检测磁轴位置）
-    *angle = (((float)high_us / (float)period_us) * 4115.0f - 1.0f) * 360.0f / 4115.0f;
-    if(*angle < 0.0f) *angle = 0.0f;
-    if(*angle >= 360.0f) *angle -= 360.0f;
-    return 1;
-}
-
 // 连续读取多帧并取中值；帧间离散过大时判定PWM不稳定，不允许电机动作。
 uint8 Step_Encoder_Read_Absolute_Angle (float *angle)
 {
     float sample[STEP_ENCODER_PWM_SAMPLE_COUNT];
     float reference;
     float temp;
+    uint32 sequence = 0;
+    uint32 previous_sequence = 0;
     uint8 i;
     uint8 j;
 
@@ -176,10 +192,13 @@ uint8 Step_Encoder_Read_Absolute_Angle (float *angle)
     }
     for(i = 0; i < STEP_ENCODER_PWM_SAMPLE_COUNT; i++)
     {
-        if(!Step_Encoder_Read_Absolute_Angle_Once(&sample[i]))
+        if((0U == i && !Step_Encoder_Read_Absolute_Angle_Once(&sample[i], &sequence))
+        || (0U != i && !Step_Encoder_Wait_Next_PWM_Frame(previous_sequence,
+                                                          &sample[i], &sequence)))
         {
             return 0;
         }
+        previous_sequence = sequence;
     }
 
     // 先围绕第一帧展开，解决359度与0度在数值上相差很大的问题。
@@ -242,9 +261,43 @@ static float Step_Encoder_Shortest_Angle_Error (float target, float actual)
 uint8 Step_Encoder_Init (void)
 {
     float initial_angle;
+    static DL_TimerG_ClockConfig clock_config =
+    {
+        .clockSel = DL_TIMER_CLOCK_BUSCLK,
+        .divideRatio = DL_TIMER_CLOCK_DIVIDE_1,
+        .prescale = 0U
+    };
+    static DL_TimerG_CaptureCombinedConfig capture_config =
+    {
+        .captureMode = DL_TIMER_CAPTURE_COMBINED_MODE_PULSE_WIDTH_AND_PERIOD,
+        .period = STEP_ENCODER_PWM_CAPTURE_LOAD,
+        .startTimer = DL_TIMER_START,
+        .inputChan = DL_TIMER_INPUT_CHAN_0,
+        .inputInvMode = DL_TIMER_CC_INPUT_INV_NOINVERT
+    };
 
     Step_Encoder_Load_Startup_Target_Angle();
-    gpio_init(STEP_ENCODER_PWM_PIN, GPI, GPIO_LOW, GPI_PULL_DOWN);
+    DL_TimerA_enablePower(STEP_ENCODER_PWM_CAPTURE_TIMER);
+    DL_TimerA_reset(STEP_ENCODER_PWM_CAPTURE_TIMER);
+    DL_GPIO_initPeripheralInputFunction(IOMUX_PINCM48,
+                                         IOMUX_PINCM48_PF_TIMA0_CCP2);
+    DL_TimerA_setClockConfig(STEP_ENCODER_PWM_CAPTURE_TIMER, &clock_config);
+    capture_config.inputChan = DL_TIMER_INPUT_CHAN_2;
+    DL_TimerA_initCaptureCombinedMode(STEP_ENCODER_PWM_CAPTURE_TIMER,
+                                      &capture_config);
+    DL_TimerA_enableInterrupt(STEP_ENCODER_PWM_CAPTURE_TIMER,
+                              DL_TIMERA_INTERRUPT_CC2_DN_EVENT
+                            | DL_TIMERA_INTERRUPT_CC3_DN_EVENT);
+    DL_TimerA_enableClock(STEP_ENCODER_PWM_CAPTURE_TIMER);
+    NVIC_ClearPendingIRQ(TIMA0_INT_IRQn);
+    NVIC_EnableIRQ(TIMA0_INT_IRQn);
+
+    step_encoder_pwm_last_rise = 0U;
+    step_encoder_pwm_period = 0U;
+    step_encoder_pwm_high = 0U;
+    step_encoder_pwm_sequence = 0U;
+    step_encoder_pwm_have_rise = 0U;
+    step_encoder_pwm_valid = 0U;
     step_encoder_count = 0;
     step_encoder_zero_count = 0;
     step_encoder_z_count = 0;
@@ -276,6 +329,47 @@ uint8 Step_Encoder_Init (void)
     step_encoder_zero_count = step_encoder_count;
     step_encoder_status = STEP_ENCODER_OK;
     return 1;
+}
+
+// TIMA0组合捕获：CC3保存相邻上升沿周期，CC2保存高电平时间。
+void Step_Encoder_PWM_IRQHandler (void)
+{
+    DL_TIMER_IIDX pending;
+
+    do
+    {
+        pending = DL_TimerA_getPendingInterrupt(STEP_ENCODER_PWM_CAPTURE_TIMER);
+        if(DL_TIMERA_IIDX_CC3_DN == pending)
+        {
+            uint32 rise = DL_TimerA_getCaptureCompareValue(
+                              STEP_ENCODER_PWM_CAPTURE_TIMER,
+                              DL_TIMER_CC_3_INDEX);
+            if(step_encoder_pwm_have_rise)
+            {
+                step_encoder_pwm_period = Step_Encoder_PWM_Elapsed(
+                                              step_encoder_pwm_last_rise, rise);
+            }
+            step_encoder_pwm_last_rise = rise;
+            step_encoder_pwm_have_rise = 1U;
+        }
+        else if(DL_TIMERA_IIDX_CC2_DN == pending)
+        {
+            uint32 fall = DL_TimerA_getCaptureCompareValue(
+                              STEP_ENCODER_PWM_CAPTURE_TIMER,
+                              DL_TIMER_CC_2_INDEX);
+            if(step_encoder_pwm_have_rise)
+            {
+                uint32 high = Step_Encoder_PWM_Elapsed(step_encoder_pwm_last_rise,
+                                                        fall);
+                if(0U != high && step_encoder_pwm_period > high)
+                {
+                    step_encoder_pwm_high = high;
+                    step_encoder_pwm_valid = 1U;
+                    step_encoder_pwm_sequence ++;
+                }
+            }
+        }
+    } while((uint32)pending != 0U);
 }
 
 float Step_Encoder_Get_Relative_Angle (void)
@@ -491,6 +585,20 @@ static Step_Encoder_Status Step_Encoder_Goto_Startup_Angle_With_Limit (float tol
         {
             float signed_movement = Step_Encoder_Shortest_Angle_Error(next_angle, current_angle);
             no_move_pulses = 0;
+            if(direction_known
+            && ((STEP_DIRECTION_FORWARD == direction && forward_increases_angle
+                 && signed_movement < 0.0f)
+             || (STEP_DIRECTION_FORWARD == direction && !forward_increases_angle
+                 && signed_movement > 0.0f)
+             || (STEP_DIRECTION_REVERSE == direction && forward_increases_angle
+                 && signed_movement > 0.0f)
+             || (STEP_DIRECTION_REVERSE == direction && !forward_increases_angle
+                 && signed_movement < 0.0f)))
+            {
+                Step_Stop();
+                step_encoder_status = STEP_ENCODER_DIRECTION_ERROR;
+                return step_encoder_status;
+            }
             if(!direction_known && STEP_DIRECTION_FORWARD == direction)
             {
                 forward_increases_angle = (signed_movement > 0.0f) ? 1 : 0;

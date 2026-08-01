@@ -38,6 +38,7 @@
 #include "isr.h"
 #include "Gimbal.h"
 #include "Serial.h"
+#include "Step_Encoder.h"
 
 volatile uint8 pit_flag = 0;
 volatile uint32 pit_tick_count = 0;
@@ -92,7 +93,11 @@ void pit_handler (uint32 event, void *ptr)
 
 void TIMA0_IRQHandler (void)
 {
-    pit_callback_list[0](0, pit_callback_ptr_list[0]);
+    Step_Encoder_PWM_IRQHandler();
+    if(NULL != pit_callback_list[0])
+    {
+        pit_callback_list[0](0, pit_callback_ptr_list[0]);
+    }
 }
 
 void TIMA1_IRQHandler (void)
